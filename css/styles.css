@@ -158,6 +158,15 @@ ul {
   font-weight: 600;
 }
 
+.flag {
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  object-fit: cover;
+  vertical-align: -2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
 .search-item-sub {
   color: var(--text-dim);
   font-size: 0.82rem;

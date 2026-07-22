@@ -25,12 +25,12 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
-// Convert a 2-letter ISO country code to a flag emoji ("US" -> 🇺🇸).
-function countryFlag(cc) {
+// Flag image for a 2-letter ISO country code, via flagcdn.com.
+// (Emoji flags don't render on Windows, so we use real images instead.)
+function flagImg(cc) {
   if (!cc || cc.length !== 2) return "";
-  return String.fromCodePoint(
-    ...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
-  );
+  const code = cc.toLowerCase();
+  return `<img class="flag" src="https://flagcdn.com/${code}.svg" alt="${escapeHtml(cc.toUpperCase())}" width="20" height="15" loading="lazy">`;
 }
 
 // Round a number to a whole degree for display.
@@ -164,7 +164,7 @@ function renderSearchResults(results) {
       const sub = [r.admin1, r.country].filter(Boolean).join(", ");
       return `
         <li class="search-item" data-index="${i}" role="option">
-          <span class="search-item-name">${countryFlag(r.countryCode)} ${escapeHtml(r.name)}</span>
+          <span class="search-item-name">${flagImg(r.countryCode)} ${escapeHtml(r.name)}</span>
           <span class="search-item-sub">${escapeHtml(sub)}</span>
         </li>`;
     })
