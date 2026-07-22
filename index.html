@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>weatherApp</title>
+  <link rel="preconnect" href="https://api.open-meteo.com" />
+  <link rel="preconnect" href="https://geocoding-api.open-meteo.com" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header: search + unit toggle -->
+    <header class="header">
+      <button class="menu-btn" id="menu-btn" aria-label="Toggle saved locations">☰</button>
+      <div class="search">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          id="search-input"
+          class="search-input"
+          placeholder="Search a city..."
+          autocomplete="off"
+          aria-label="Search a city"
+        />
+        <ul class="search-results" id="search-results" hidden></ul>
+      </div>
+      <div class="unit-toggle" id="unit-toggle" role="group" aria-label="Temperature units">
+        <button class="unit-btn is-active" data-unit="fahrenheit">°F</button>
+        <button class="unit-btn" data-unit="celsius">°C</button>
+      </div>
+    </header>
+
+    <!-- Sidebar: saved locations -->
+    <aside class="sidebar" id="sidebar">
+      <h2 class="sidebar-title">Saved</h2>
+      <ul class="saved-list" id="saved-list">
+        <!-- saved location cards injected here -->
+      </ul>
+      <p class="saved-empty" id="saved-empty">No saved locations yet. Search a city and tap the ★ to save it.</p>
+    </aside>
+
+    <!-- Main: current weather + forecasts -->
+    <main class="main" id="main">
+      <p class="fallback-hint" id="fallback-hint" hidden></p>
+
+      <section class="current" id="current">
+        <div class="current-place">
+          <h1 class="current-name" id="current-name">—</h1>
+          <button class="save-btn" id="save-btn" aria-label="Save this location" hidden>☆</button>
+        </div>
+        <div class="current-temp" id="current-temp">--°</div>
+        <div class="current-cond" id="current-cond">—</div>
+        <div class="current-meta" id="current-meta"></div>
+      </section>
+
+      <section class="hourly" id="hourly" aria-label="Hourly forecast">
+        <h2 class="section-title">Hourly</h2>
+        <div class="hourly-strip" id="hourly-strip"></div>
+      </section>
+
+      <section class="daily" id="daily" aria-label="7-day forecast">
+        <h2 class="section-title">7-Day Forecast</h2>
+        <div class="daily-grid" id="daily-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/weatherCodes.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
