@@ -8,6 +8,10 @@ const els = {
   currentCond: document.getElementById("current-cond"),
   currentMeta: document.getElementById("current-meta"),
   saveBtn: document.getElementById("save-btn"),
+  hourlySection: document.getElementById("hourly"),
+  hourlyStrip: document.getElementById("hourly-strip"),
+  dailySection: document.getElementById("daily"),
+  dailyGrid: document.getElementById("daily-grid"),
 };
 
 // Round a number to a whole degree for display.
@@ -49,6 +53,66 @@ function renderCurrent(loc, data, unit) {
   `;
 }
 
+// Format an hourly timestamp ("2026-07-22T21:00") to a short label.
+// The API returns times already in the location's local timezone, so we read
+// the hour straight from the string to avoid browser-timezone shifts.
+function formatHour(isoLocal, index) {
+  if (index === 0) return "Now";
+  const hour = parseInt(isoLocal.slice(11, 13), 10);
+  const h12 = ((hour + 11) % 12) + 1;
+  return `${h12} ${hour < 12 ? "AM" : "PM"}`;
+}
+
+// Format a daily date ("2026-07-22") to a weekday label.
+function formatDay(isoDate, index) {
+  if (index === 0) return "Today";
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short" });
+}
+
+// Render the 24-hour hourly strip.
+function renderHourly(data) {
+  const h = data.hourly;
+  els.hourlyStrip.innerHTML = h.time
+    .map((t, i) => {
+      const { icon } = describeWeather(h.weather_code[i], h.is_day[i]);
+      return `
+        <div class="hour card">
+          <span class="hour-time">${formatHour(t, i)}</span>
+          <span class="hour-icon">${icon}</span>
+          <span class="hour-temp">${roundTemp(h.temperature_2m[i])}°</span>
+        </div>`;
+    })
+    .join("");
+  els.hourlySection.hidden = false;
+}
+
+// Render the 7-day forecast grid.
+function renderDaily(data) {
+  const d = data.daily;
+  els.dailyGrid.innerHTML = d.time
+    .map((t, i) => {
+      const { icon, label } = describeWeather(d.weather_code[i], 1); // daytime icon
+      const precip = d.precipitation_probability_max?.[i];
+      const precipHtml =
+        precip != null && precip > 0
+          ? `<span class="day-precip">💧 ${precip}%</span>`
+          : "";
+      return `
+        <div class="day card">
+          <span class="day-name">${formatDay(t, i)}</span>
+          <span class="day-icon" title="${label}">${icon}</span>
+          <span class="day-temps">
+            <span class="day-hi">${roundTemp(d.temperature_2m_max[i])}°</span>
+            <span class="day-lo">${roundTemp(d.temperature_2m_min[i])}°</span>
+          </span>
+          ${precipHtml}
+        </div>`;
+    })
+    .join("");
+  els.dailySection.hidden = false;
+}
+
 // Show a loading state in the main panel.
 function setLoading(loc) {
   els.currentName.textContent = loc ? placeLabel(loc) : "Loading…";
@@ -63,6 +127,8 @@ function showError(message) {
   els.currentTemp.textContent = "--°";
   els.currentCond.textContent = message || "Unable to load weather.";
   els.currentMeta.innerHTML = "";
+  els.hourlySection.hidden = true;
+  els.dailySection.hidden = true;
 }
 
 // Show/hide the fallback hint banner.

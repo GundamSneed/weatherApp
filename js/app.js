@@ -86,6 +86,8 @@ async function loadWeather(location, fallback = null) {
     });
     state.data = data;
     renderCurrent(location, data, state.unit);
+    renderHourly(data);
+    renderDaily(data);
 
     // For the current location we only have coords — resolve the real city
     // name in the background and swap it in when it arrives (keep the
@@ -137,10 +139,6 @@ function wireEvents() {
 async function init() {
   syncUnitToggle();
   wireEvents();
-
-  // Hourly/daily sections are populated in step 4 — hide until then.
-  document.getElementById("hourly").hidden = true;
-  document.getElementById("daily").hidden = true;
 
   const { location, fallback } = await resolveInitialLocation();
   await loadWeather(location, fallback);

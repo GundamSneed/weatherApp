@@ -291,6 +291,72 @@ ul {
   box-shadow: var(--shadow);
 }
 
+/* ===== Hourly cards ===== */
+.hour {
+  flex: 0 0 auto;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+}
+
+.hour-time {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.hour-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.hour-temp {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ===== Daily cards ===== */
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.day-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.day-icon {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.day-temps {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.day-hi {
+  font-weight: 600;
+}
+
+.day-lo {
+  color: var(--text-faint);
+}
+
+.day-precip {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 760px) {
   .app {
