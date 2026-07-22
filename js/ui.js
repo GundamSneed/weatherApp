@@ -12,7 +12,26 @@ const els = {
   hourlyStrip: document.getElementById("hourly-strip"),
   dailySection: document.getElementById("daily"),
   dailyGrid: document.getElementById("daily-grid"),
+  searchInput: document.getElementById("search-input"),
+  searchResults: document.getElementById("search-results"),
 };
+
+// Escape user/API-provided text before inserting into innerHTML.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Convert a 2-letter ISO country code to a flag emoji ("US" -> 🇺🇸).
+function countryFlag(cc) {
+  if (!cc || cc.length !== 2) return "";
+  return String.fromCodePoint(
+    ...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
+  );
+}
 
 // Round a number to a whole degree for display.
 function roundTemp(n) {
@@ -129,6 +148,33 @@ function showError(message) {
   els.currentMeta.innerHTML = "";
   els.hourlySection.hidden = true;
   els.dailySection.hidden = true;
+}
+
+// Render the search-results dropdown. `results` are normalized geocoding hits;
+// each item carries a data-index into the caller's results array.
+function renderSearchResults(results) {
+  const ul = els.searchResults;
+  if (!results.length) {
+    ul.innerHTML = `<li class="search-empty">No matches found</li>`;
+    ul.hidden = false;
+    return;
+  }
+  ul.innerHTML = results
+    .map((r, i) => {
+      const sub = [r.admin1, r.country].filter(Boolean).join(", ");
+      return `
+        <li class="search-item" data-index="${i}" role="option">
+          <span class="search-item-name">${countryFlag(r.countryCode)} ${escapeHtml(r.name)}</span>
+          <span class="search-item-sub">${escapeHtml(sub)}</span>
+        </li>`;
+    })
+    .join("");
+  ul.hidden = false;
+}
+
+function hideSearchResults() {
+  els.searchResults.hidden = true;
+  els.searchResults.innerHTML = "";
 }
 
 // Show/hide the fallback hint banner.

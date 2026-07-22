@@ -136,6 +136,40 @@ ul {
   z-index: 30;
 }
 
+.search-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-item + .search-item {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.search-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.search-item-name {
+  font-weight: 600;
+}
+
+.search-item-sub {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.search-empty {
+  padding: 11px 14px;
+  color: var(--text-faint);
+  font-size: 0.9rem;
+}
+
 .unit-toggle {
   display: flex;
   background: var(--glass-bg-strong);

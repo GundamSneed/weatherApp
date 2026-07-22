@@ -18,6 +18,18 @@ const state = {
   location: null,       // currently displayed location
 };
 
+// Most recent search results, indexed by the dropdown's data-index.
+let searchResults = [];
+
+// Simple trailing debounce.
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
 // Promise wrapper around the callback-based Geolocation API.
 function getCurrentPosition() {
   return new Promise((resolve, reject) => {
@@ -114,6 +126,28 @@ function syncUnitToggle() {
   });
 }
 
+// Run a geocoding search and populate the dropdown.
+const runSearch = debounce(async (query) => {
+  try {
+    const results = await geocode(query, 6);
+    searchResults = results;
+    renderSearchResults(results);
+  } catch {
+    searchResults = [];
+    hideSearchResults();
+  }
+}, 300);
+
+// Load the weather for a chosen search result and reset the search UI.
+function selectSearchResult(index) {
+  const loc = searchResults[index];
+  if (!loc) return;
+  els.searchInput.value = "";
+  hideSearchResults();
+  els.searchInput.blur();
+  loadWeather(loc); // explicit choice -> no fallback hint
+}
+
 function wireEvents() {
   // Sidebar toggle (mobile).
   const menuBtn = document.getElementById("menu-btn");
@@ -121,6 +155,39 @@ function wireEvents() {
   if (menuBtn && sidebar) {
     menuBtn.addEventListener("click", () => sidebar.classList.toggle("is-open"));
   }
+
+  // Search: debounced geocoding as the user types.
+  els.searchInput.addEventListener("input", (e) => {
+    const q = e.target.value.trim();
+    if (q.length < 2) {
+      searchResults = [];
+      hideSearchResults();
+      return;
+    }
+    runSearch(q);
+  });
+
+  // Keyboard: Enter selects the first match, Escape dismisses the dropdown.
+  els.searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && searchResults.length) {
+      selectSearchResult(0);
+    } else if (e.key === "Escape") {
+      hideSearchResults();
+      els.searchInput.blur();
+    }
+  });
+
+  // Click a result to load it.
+  els.searchResults.addEventListener("click", (e) => {
+    const item = e.target.closest(".search-item");
+    if (!item) return;
+    selectSearchResult(Number(item.dataset.index));
+  });
+
+  // Dismiss the dropdown when clicking outside the search box.
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search")) hideSearchResults();
+  });
 
   // Unit toggle: switch units, persist, and re-fetch the current location.
   const unitToggle = document.getElementById("unit-toggle");
