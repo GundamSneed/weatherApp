@@ -264,6 +264,13 @@ ul {
   font-weight: 600;
 }
 
+/* Flag on the main panel scales with the heading text height. */
+.current-name .flag {
+  width: auto;
+  height: 0.85em;
+  vertical-align: -0.08em;
+}
+
 .save-btn {
   font-size: 1.6rem;
   color: var(--accent);

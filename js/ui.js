@@ -50,9 +50,22 @@ function placeLabel(loc) {
   return (loc.isCurrent ? "📍 " : "") + parts.join(", ");
 }
 
+// HTML version of the place label for the main panel: flag image before the
+// city name (pin first for the current location). Sized via CSS to match text.
+function placeLabelHtml(loc) {
+  const isPlaceholder = !loc.name || loc.name === "Your Location";
+  if (loc.isCurrent && isPlaceholder) return "📍 Your Location";
+  const pin = loc.isCurrent ? "📍 " : "";
+  const flag = loc.countryCode ? flagImg(loc.countryCode) + " " : "";
+  const parts = [loc.name];
+  if (loc.admin1 && loc.admin1 !== loc.name) parts.push(loc.admin1);
+  if (!loc.isCurrent && loc.country) parts.push(loc.country);
+  return pin + flag + escapeHtml(parts.join(", "));
+}
+
 // Update just the place-name line (used when reverse geocoding resolves).
 function updatePlaceName(loc) {
-  els.currentName.textContent = placeLabel(loc);
+  els.currentName.innerHTML = placeLabelHtml(loc);
 }
 
 // Render the main current-conditions panel.
@@ -61,7 +74,7 @@ function renderCurrent(loc, data, unit) {
   const units = data.current_units;
   const { label, icon } = describeWeather(c.weather_code, c.is_day);
 
-  els.currentName.textContent = placeLabel(loc);
+  els.currentName.innerHTML = placeLabelHtml(loc);
   els.currentTemp.textContent = `${roundTemp(c.temperature_2m)}°`;
   els.currentCond.textContent = `${icon} ${label}`;
 
@@ -134,7 +147,7 @@ function renderDaily(data) {
 
 // Show a loading state in the main panel.
 function setLoading(loc) {
-  els.currentName.textContent = loc ? placeLabel(loc) : "Loading…";
+  els.currentName.innerHTML = loc ? placeLabelHtml(loc) : "Loading…";
   els.currentTemp.textContent = "--°";
   els.currentCond.textContent = "Fetching weather…";
   els.currentMeta.innerHTML = "";
