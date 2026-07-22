@@ -491,6 +491,56 @@ ul {
   color: var(--text-dim);
 }
 
+/* ===== Loading pulse ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
+}
+
+.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+/* ===== Card hover lift (hourly / daily) ===== */
+.hour,
+.day {
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.hour:hover,
+.day:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== Fade-in on load ===== */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.current,
+.hourly,
+.daily {
+  animation: fade-in 0.4s ease both;
+}
+
+.hourly { animation-delay: 0.05s; }
+.daily { animation-delay: 0.1s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .current,
+  .hourly,
+  .daily {
+    animation: none;
+  }
+  .hour:hover,
+  .day:hover {
+    transform: none;
+  }
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 760px) {
   .app {
@@ -498,6 +548,19 @@ ul {
     grid-template-areas:
       "header"
       "main";
+  }
+
+  .header {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  .search {
+    max-width: none;
+  }
+
+  .unit-btn {
+    padding: 8px 12px;
   }
 
   .menu-btn {
@@ -513,6 +576,7 @@ ul {
     transform: translateX(-100%);
     transition: transform 0.28s ease;
     z-index: 15;
+    box-shadow: var(--shadow);
   }
 
   .sidebar.is-open {
