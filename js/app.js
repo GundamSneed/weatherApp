@@ -86,6 +86,20 @@ async function loadWeather(location, fallback = null) {
     });
     state.data = data;
     renderCurrent(location, data, state.unit);
+
+    // For the current location we only have coords — resolve the real city
+    // name in the background and swap it in when it arrives (keep the
+    // "Your Location" placeholder if reverse geocoding fails).
+    if (location.isCurrent && (!location.name || location.name === "Your Location")) {
+      reverseGeocode(location.latitude, location.longitude)
+        .then((place) => {
+          if (place.name && state.location === location) {
+            Object.assign(location, place);
+            updatePlaceName(location);
+          }
+        })
+        .catch(() => {});
+    }
   } catch (err) {
     showError(err.message);
   }

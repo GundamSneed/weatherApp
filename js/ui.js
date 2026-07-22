@@ -16,12 +16,20 @@ function roundTemp(n) {
 }
 
 // Build a readable place label from a location object.
+// Current location shows a pin; before reverse geocoding resolves it reads
+// "Your Location", then swaps to the real city once we have a name.
 function placeLabel(loc) {
-  if (loc.isCurrent) return "📍 Your Location";
+  const isPlaceholder = !loc.name || loc.name === "Your Location";
+  if (loc.isCurrent && isPlaceholder) return "📍 Your Location";
   const parts = [loc.name];
   if (loc.admin1 && loc.admin1 !== loc.name) parts.push(loc.admin1);
-  if (loc.country) parts.push(loc.country);
-  return parts.join(", ");
+  if (!loc.isCurrent && loc.country) parts.push(loc.country);
+  return (loc.isCurrent ? "📍 " : "") + parts.join(", ");
+}
+
+// Update just the place-name line (used when reverse geocoding resolves).
+function updatePlaceName(loc) {
+  els.currentName.textContent = placeLabel(loc);
 }
 
 // Render the main current-conditions panel.

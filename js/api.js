@@ -4,6 +4,9 @@
 
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
+// Reverse geocoding (coords -> place name) — BigDataCloud, free, no API key.
+// Open-Meteo has no reverse endpoint, so this fills in the current-location name.
+const REVERSE_GEOCODE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
 
 // Unit presets. The app toggles between "fahrenheit" and "celsius"; each maps to a
 // matching wind-speed unit so the UI stays internally consistent.
@@ -100,4 +103,21 @@ async function geocode(name, count = 6) {
     latitude: r.latitude,
     longitude: r.longitude,
   }));
+}
+
+/**
+ * Reverse geocode a coordinate to a place name (used to name the current location).
+ * @param {number} latitude
+ * @param {number} longitude
+ * @returns {Promise<{name, admin1, country, countryCode}>}
+ */
+async function reverseGeocode(latitude, longitude) {
+  const params = { latitude, longitude, localityLanguage: "en" };
+  const data = await fetchJSON(`${REVERSE_GEOCODE_URL}?${toQuery(params)}`);
+  return {
+    name: data.city || data.locality || data.principalSubdivision || "",
+    admin1: data.principalSubdivision || "",
+    country: data.countryName || "",
+    countryCode: data.countryCode || "",
+  };
 }
