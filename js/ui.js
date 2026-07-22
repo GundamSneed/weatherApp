@@ -14,6 +14,8 @@ const els = {
   dailyGrid: document.getElementById("daily-grid"),
   searchInput: document.getElementById("search-input"),
   searchResults: document.getElementById("search-results"),
+  savedList: document.getElementById("saved-list"),
+  savedEmpty: document.getElementById("saved-empty"),
 };
 
 // Escape user/API-provided text before inserting into innerHTML.
@@ -188,6 +190,41 @@ function renderSearchResults(results) {
 function hideSearchResults() {
   els.searchResults.hidden = true;
   els.searchResults.innerHTML = "";
+}
+
+// Render the sidebar list of saved locations. Mini-weather starts as a
+// placeholder ("…") and is filled in asynchronously via setSavedWeather.
+function renderSavedList(locations) {
+  els.savedEmpty.hidden = locations.length > 0;
+  els.savedList.innerHTML = locations
+    .map((loc, i) => {
+      const sub = [loc.admin1, loc.country].filter(Boolean).join(", ");
+      return `
+        <li class="saved-item card" data-index="${i}">
+          <div class="saved-click" data-action="select" role="button" tabindex="0"
+               aria-label="View weather for ${escapeHtml(loc.name)}">
+            ${flagImg(loc.countryCode)}
+            <span class="saved-info">
+              <span class="saved-name">${escapeHtml(loc.name)}</span>
+              <span class="saved-sub">${escapeHtml(sub)}</span>
+            </span>
+            <span class="saved-weather" data-index="${i}">
+              <span class="saved-temp">…</span>
+            </span>
+          </div>
+          <button class="saved-remove" data-action="remove"
+                  aria-label="Remove ${escapeHtml(loc.name)}">×</button>
+        </li>`;
+    })
+    .join("");
+}
+
+// Fill in a saved item's mini-weather once its current conditions arrive.
+function setSavedWeather(index, icon, temp) {
+  const el = els.savedList.querySelector(`.saved-weather[data-index="${index}"]`);
+  if (el) {
+    el.innerHTML = `<span class="saved-icon">${icon}</span><span class="saved-temp">${temp}°</span>`;
+  }
 }
 
 // Show/hide the fallback hint banner.

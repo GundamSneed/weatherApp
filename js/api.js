@@ -83,6 +83,24 @@ async function fetchForecast({ latitude, longitude, unit = "fahrenheit" }) {
 }
 
 /**
+ * Fetch only current conditions for a coordinate (used by sidebar mini-weather).
+ * @param {Object} opts { latitude, longitude, unit }
+ * @returns {Promise<Object>} raw Open-Meteo JSON (current block only)
+ */
+async function fetchCurrent({ latitude, longitude, unit = "fahrenheit" }) {
+  const preset = UNIT_PRESETS[unit] || UNIT_PRESETS.fahrenheit;
+  const params = {
+    latitude,
+    longitude,
+    current: ["temperature_2m", "weather_code", "is_day"],
+    temperature_unit: preset.temperature_unit,
+    wind_speed_unit: preset.wind_speed_unit,
+    timezone: "auto",
+  };
+  return fetchJSON(`${FORECAST_URL}?${toQuery(params)}`);
+}
+
+/**
  * Search for places by name (powers the search bar).
  * @param {string} name
  * @param {number} [count=6]

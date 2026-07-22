@@ -232,6 +232,90 @@ ul {
   padding: 6px;
 }
 
+/* ===== Saved location cards ===== */
+.saved-item {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.saved-click {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+}
+
+.saved-click:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.saved-click .flag {
+  flex: 0 0 auto;
+}
+
+.saved-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.saved-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-sub {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-weather {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.saved-icon {
+  font-size: 1.1rem;
+}
+
+.saved-remove {
+  flex: 0 0 auto;
+  padding: 0 12px;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--text-faint);
+  transition: color 0.15s, background 0.15s;
+}
+
+.saved-remove:hover {
+  color: #fff;
+  background: rgba(220, 60, 60, 0.35);
+}
+
+.save-btn.is-saved {
+  color: var(--accent);
+}
+
 /* ===== Main ===== */
 .main {
   grid-area: main;

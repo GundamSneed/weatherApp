@@ -100,6 +100,7 @@ async function loadWeather(location, fallback = null) {
     renderCurrent(location, data, state.unit);
     renderHourly(data);
     renderDaily(data);
+    updateSaveButton();
 
     // For the current location we only have coords — resolve the real city
     // name in the background and swap it in when it arrives (keep the
@@ -110,6 +111,7 @@ async function loadWeather(location, fallback = null) {
           if (place.name && state.location === location) {
             Object.assign(location, place);
             updatePlaceName(location);
+            updateSaveButton(); // now has a name/country -> becomes saveable
           }
         })
         .catch(() => {});
@@ -117,6 +119,38 @@ async function loadWeather(location, fallback = null) {
   } catch (err) {
     showError(err.message);
   }
+}
+
+// Reflect the saved/unsaved state of the current location on the ☆ button.
+// Hidden until the location has a real name (not the "Your Location" placeholder).
+function updateSaveButton() {
+  const loc = state.location;
+  const hasName = loc && loc.name && loc.name !== "Your Location";
+  if (!hasName) {
+    els.saveBtn.hidden = true;
+    return;
+  }
+  const saved = isSaved(loc);
+  els.saveBtn.hidden = false;
+  els.saveBtn.textContent = saved ? "★" : "☆";
+  els.saveBtn.classList.toggle("is-saved", saved);
+  els.saveBtn.setAttribute("aria-label", saved ? "Remove from saved" : "Save this location");
+}
+
+// Re-render the sidebar list and (re)load each location's mini-weather.
+function refreshSaved() {
+  const saved = getSavedLocations();
+  renderSavedList(saved);
+  updateSaveButton();
+  saved.forEach((loc, i) => {
+    fetchCurrent({ latitude: loc.latitude, longitude: loc.longitude, unit: state.unit })
+      .then((d) => {
+        const c = d.current;
+        const { icon } = describeWeather(c.weather_code, c.is_day);
+        setSavedWeather(i, icon, Math.round(c.temperature_2m));
+      })
+      .catch(() => setSavedWeather(i, "⚠️", "--"));
+  });
 }
 
 // Reflect the active unit in the toggle UI.
@@ -189,7 +223,7 @@ function wireEvents() {
     if (!e.target.closest(".search")) hideSearchResults();
   });
 
-  // Unit toggle: switch units, persist, and re-fetch the current location.
+  // Unit toggle: switch units, persist, re-fetch current + refresh sidebar.
   const unitToggle = document.getElementById("unit-toggle");
   if (unitToggle) {
     unitToggle.addEventListener("click", (e) => {
@@ -199,13 +233,63 @@ function wireEvents() {
       setUnit(state.unit);
       syncUnitToggle();
       if (state.location) loadWeather(state.location);
+      refreshSaved();
     });
   }
+
+  // Save/unsave the currently displayed location.
+  els.saveBtn.addEventListener("click", () => {
+    const loc = state.location;
+    if (!loc || !loc.name || loc.name === "Your Location") return;
+    if (isSaved(loc)) {
+      removeLocation(loc);
+    } else {
+      // Store a plain city entry (drop the transient isCurrent flag).
+      saveLocation({
+        name: loc.name,
+        admin1: loc.admin1,
+        country: loc.country,
+        countryCode: loc.countryCode,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      });
+    }
+    updateSaveButton();
+    refreshSaved();
+  });
+
+  // Sidebar: select a saved location to view, or remove it.
+  els.savedList.addEventListener("click", (e) => {
+    const item = e.target.closest(".saved-item");
+    if (!item) return;
+    const index = Number(item.dataset.index);
+    const saved = getSavedLocations();
+    const loc = saved[index];
+    if (!loc) return;
+    if (e.target.closest('[data-action="remove"]')) {
+      removeLocation(loc);
+      updateSaveButton();
+      refreshSaved();
+    } else {
+      loadWeather(loc);
+      document.getElementById("sidebar").classList.remove("is-open"); // close on mobile
+    }
+  });
+
+  // Keyboard access: Enter/Space on a saved item selects it.
+  els.savedList.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const click = e.target.closest('.saved-click');
+    if (!click) return;
+    e.preventDefault();
+    click.click();
+  });
 }
 
 async function init() {
   syncUnitToggle();
   wireEvents();
+  refreshSaved();
 
   const { location, fallback } = await resolveInitialLocation();
   await loadWeather(location, fallback);
