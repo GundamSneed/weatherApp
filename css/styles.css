@@ -629,14 +629,18 @@ ul {
   50% { opacity: 0.9; transform: scale(1); }
 }
 
-/* Clouds */
+/* Clouds (built from overlapping puffs for a defined shape) */
 .cloud {
   position: absolute;
   left: 0;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  filter: blur(8px);
+  filter: blur(1.5px) drop-shadow(0 8px 10px rgba(25, 35, 55, 0.14));
   animation: cloud-drift linear infinite;
+}
+
+.puff {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
 }
 
 @keyframes cloud-drift {
@@ -693,47 +697,58 @@ ul {
 .lightning-flash {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9), rgba(200, 210, 255, 0.3) 40%, transparent 70%);
+  background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.85), rgba(200, 215, 255, 0.28) 42%, transparent 72%);
   opacity: 0;
-  animation: lightning 9s linear infinite;
 }
 
-@keyframes lightning {
-  0%, 47%, 100% { opacity: 0; }
-  2% { opacity: 0.9; }
-  4% { opacity: 0.1; }
-  5% { opacity: 0.7; }
-  7% { opacity: 0; }
-  50% { opacity: 0.6; }
-  52% { opacity: 0; }
+.lightning-flash.strike {
+  animation: flash-sky 0.85s ease-out;
 }
 
 .bolt {
   position: absolute;
-  top: 3%;
-  width: 46px;
-  height: 150px;
+  top: 0;
+  height: 90vh;
+  width: 30vh;
   opacity: 0;
-  filter: drop-shadow(0 0 10px rgba(210, 225, 255, 0.9));
-  animation: bolt-flash 9s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(205, 225, 255, 0.9)) drop-shadow(0 0 18px rgba(150, 185, 255, 0.55));
+}
+
+.bolt.strike {
+  animation: flash-bolt 0.85s ease-out;
 }
 
 .bolt svg {
   width: 100%;
   height: 100%;
   display: block;
+  overflow: visible;
 }
 
-.bolt polygon {
-  fill: rgba(245, 248, 255, 0.95);
+.bolt-line {
+  fill: none;
+  stroke: #f2f6ff;
+  stroke-width: 3.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
-@keyframes bolt-flash {
-  0%, 100% { opacity: 0; }
-  2% { opacity: 1; }
-  6% { opacity: 0; }
-  50% { opacity: 0.9; }
-  53% { opacity: 0; }
+@keyframes flash-sky {
+  0% { opacity: 0; }
+  6% { opacity: 0.85; }
+  12% { opacity: 0.15; }
+  18% { opacity: 0.6; }
+  28% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes flash-bolt {
+  0% { opacity: 0; }
+  4% { opacity: 1; }
+  10% { opacity: 0.25; }
+  15% { opacity: 0.95; }
+  26% { opacity: 0; }
+  100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

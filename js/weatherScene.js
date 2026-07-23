@@ -8,6 +8,14 @@ function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+// Timers for JS-driven effects (e.g. lightning); cleared on each scene rebuild
+// so switching conditions doesn't leave old strike loops running.
+let sceneTimers = [];
+function clearSceneTimers() {
+  sceneTimers.forEach(clearTimeout);
+  sceneTimers = [];
+}
+
 // Create a div with a class and optional inline styles.
 function sceneEl(cls, styles) {
   const el = document.createElement("div");
@@ -47,20 +55,46 @@ function addStars(root, count) {
   }
 }
 
-// Soft drifting clouds. tint/opacity/count vary the mood by scene.
-function addClouds(root, { count = 5, opacity = 0.5, speed = 60 } = {}) {
-  for (let i = 0; i < count; i++) {
-    const w = rand(180, 340);
-    root.appendChild(
-      sceneEl("cloud", {
-        width: `${w}px`,
-        height: `${w * 0.42}px`,
-        top: `${rand(2, 55)}%`,
-        opacity: `${opacity * rand(0.75, 1)}`,
-        animationDuration: `${speed * rand(0.7, 1.3)}s`,
-        animationDelay: `${-rand(0, speed)}s`,
+// Build a single defined cloud from overlapping circular "puffs".
+function makeCloud(w, opacity) {
+  const h = w * 0.66;
+  const cloud = sceneEl("cloud", {
+    width: `${w}px`,
+    height: `${h}px`,
+    opacity: `${opacity}`,
+  });
+  // [centerX, centerY, radius] as fractions of the cloud box.
+  const puffs = [
+    [0.20, 0.66, 0.36],
+    [0.40, 0.42, 0.48],
+    [0.60, 0.46, 0.44],
+    [0.80, 0.64, 0.34],
+    [0.50, 0.74, 0.52],
+  ];
+  puffs.forEach(([cx, cy, r]) => {
+    const d = r * w;
+    cloud.appendChild(
+      sceneEl("puff", {
+        width: `${d}px`,
+        height: `${d}px`,
+        left: `${cx * w - d / 2}px`,
+        top: `${cy * h - d / 2}px`,
       })
     );
+  });
+  return cloud;
+}
+
+// Drifting clouds. count/opacity/speed vary the mood by scene.
+function addClouds(root, { count = 5, opacity = 0.5, speed = 60 } = {}) {
+  for (let i = 0; i < count; i++) {
+    const cloud = makeCloud(rand(150, 300), opacity * rand(0.82, 1));
+    Object.assign(cloud.style, {
+      top: `${rand(0, 60)}%`,
+      animationDuration: `${speed * rand(0.7, 1.3)}s`,
+      animationDelay: `${-rand(0, speed)}s`,
+    });
+    root.appendChild(cloud);
   }
 }
 
@@ -108,19 +142,68 @@ function addFog(root) {
   }
 }
 
-// Ambient lightning: full-screen flashes plus a couple of CSS-animated bolts.
+// Generate a jagged, branching lightning path (main streak + 1-2 branches),
+// as SVG path `d` strings in a 100 x 500 viewBox.
+function boltPaths() {
+  const segs = 8;
+  const pts = [[50, 0]];
+  for (let i = 1; i <= segs; i++) {
+    pts.push([50 + rand(-24, 24), (500 / segs) * i]);
+  }
+  const main =
+    `M${pts[0][0]},${pts[0][1]} ` +
+    pts.slice(1).map((p) => `L${p[0]},${p[1]}`).join(" ");
+
+  const branches = [];
+  const branchCount = Math.random() < 0.7 ? 1 : 2;
+  for (let b = 0; b < branchCount; b++) {
+    const [bx, by] = pts[Math.floor(rand(3, 6))];
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    branches.push(
+      `M${bx},${by} L${bx + dir * rand(16, 30)},${by + rand(40, 70)} ` +
+      `L${bx + dir * rand(24, 46)},${by + rand(95, 135)}`
+    );
+  }
+  return [main, ...branches];
+}
+
+function paintBolt(bolt) {
+  bolt.style.left = `${rand(12, 80)}%`;
+  bolt.style.transform = `scaleX(${rand(0.8, 1.15)})`;
+  bolt.querySelector("svg").innerHTML = boltPaths()
+    .map((d) => `<path class="bolt-line" d="${d}"/>`)
+    .join("");
+}
+
+// Restart a one-shot flash animation on an element.
+function retrigger(el) {
+  el.classList.remove("strike");
+  void el.offsetWidth; // force reflow so the animation replays
+  el.classList.add("strike");
+}
+
+// Natural lightning: randomly timed strikes, each a freshly generated bolt
+// flashed together with a sky-wide flash.
 function addLightning(root) {
-  root.appendChild(sceneEl("lightning-flash"));
-  const boltSvg =
-    '<svg viewBox="0 0 40 100" preserveAspectRatio="none"><polygon points="24,0 6,54 20,54 14,100 38,40 22,40 34,0"/></svg>';
-  [
-    { left: "22%", delay: "0s" },
-    { left: "68%", delay: "4.3s" },
-  ].forEach((b) => {
-    const bolt = sceneEl("bolt", { left: b.left, animationDelay: b.delay });
-    bolt.innerHTML = boltSvg;
+  const flash = sceneEl("lightning-flash");
+  root.appendChild(flash);
+
+  const bolts = [];
+  for (let i = 0; i < 3; i++) {
+    const bolt = sceneEl("bolt");
+    bolt.innerHTML = '<svg viewBox="0 0 100 500" preserveAspectRatio="xMidYMin meet"></svg>';
     root.appendChild(bolt);
-  });
+    bolts.push(bolt);
+  }
+
+  function strike() {
+    const bolt = bolts[Math.floor(Math.random() * bolts.length)];
+    paintBolt(bolt);
+    retrigger(flash);
+    retrigger(bolt);
+    sceneTimers.push(setTimeout(strike, rand(2500, 6500)));
+  }
+  sceneTimers.push(setTimeout(strike, rand(600, 2000)));
 }
 
 // --- Scene composition -------------------------------------------------------
@@ -128,6 +211,7 @@ function addLightning(root) {
 function buildWeatherScene(category, isDay) {
   const root = document.getElementById(SCENE_ROOT_ID);
   if (!root) return;
+  clearSceneTimers();
   root.innerHTML = "";
   root.dataset.scene = `${category}-${isDay ? "day" : "night"}`;
 
@@ -138,7 +222,7 @@ function buildWeatherScene(category, isDay) {
     case "clear":
       if (isDay) {
         addSun(root);
-        if (!calm) addClouds(root, { count: 2, opacity: 0.28, speed: 90 });
+        if (!calm) addClouds(root, { count: 3, opacity: 0.55, speed: 90 });
       } else {
         addStars(root, calm ? 30 : 60);
         addMoon(root);
@@ -146,31 +230,31 @@ function buildWeatherScene(category, isDay) {
       break;
 
     case "clouds":
-      if (!isDay) addStars(root, 25);
+      if (!isDay) addStars(root, 22);
       addClouds(root, {
-        count: calm ? 4 : 7,
-        opacity: isDay ? 0.55 : 0.4,
-        speed: 70,
+        count: calm ? 6 : isDay ? 12 : 9,
+        opacity: isDay ? 0.92 : 0.55,
+        speed: 75,
       });
       break;
 
     case "fog":
       addFog(root);
-      addClouds(root, { count: 3, opacity: 0.3, speed: 90 });
+      addClouds(root, { count: 4, opacity: 0.4, speed: 90 });
       break;
 
     case "rain":
-      addClouds(root, { count: 5, opacity: isDay ? 0.5 : 0.4, speed: 55 });
+      addClouds(root, { count: 7, opacity: isDay ? 0.7 : 0.5, speed: 55 });
       if (!calm) addRain(root, 70);
       break;
 
     case "snow":
-      addClouds(root, { count: 4, opacity: isDay ? 0.5 : 0.4, speed: 70 });
+      addClouds(root, { count: 6, opacity: isDay ? 0.7 : 0.5, speed: 70 });
       addSnow(root, calm ? 18 : 45);
       break;
 
     case "thunder":
-      addClouds(root, { count: 6, opacity: 0.45, speed: 50 });
+      addClouds(root, { count: 8, opacity: 0.6, speed: 50 });
       if (!calm) {
         addRain(root, 60);
         addLightning(root);
