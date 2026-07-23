@@ -5,6 +5,7 @@ const els = {
   fallbackHint: document.getElementById("fallback-hint"),
   currentName: document.getElementById("current-name"),
   currentTemp: document.getElementById("current-temp"),
+  currentIcon: document.getElementById("current-icon"),
   currentCond: document.getElementById("current-cond"),
   currentMeta: document.getElementById("current-meta"),
   saveBtn: document.getElementById("save-btn"),
@@ -40,37 +41,6 @@ function roundTemp(n) {
   return Math.round(n);
 }
 
-// Gradient themes keyed by weather category and time of day. Chosen to keep
-// white text legible while shifting the mood with conditions.
-const WEATHER_THEMES = {
-  clear:   { day: ["#2b8fe0", "#71b7f0"], night: ["#12203f", "#3b2f66"] },
-  clouds:  { day: ["#5878a0", "#8ba6c2"], night: ["#252c3a", "#434d5e"] },
-  fog:     { day: ["#6a7580", "#98a2ad"], night: ["#2b2f36", "#474d57"] },
-  rain:    { day: ["#3f5c6b", "#6d8b9c"], night: ["#1c2530", "#374553"] },
-  snow:    { day: ["#5f7fa6", "#9fbdd8"], night: ["#26324c", "#465873"] },
-  thunder: { day: ["#332a4d", "#574571"], night: ["#211a33", "#3d2f55"] },
-};
-
-// Map a WMO code to a theme category.
-function weatherCategory(code) {
-  if (code <= 1) return "clear";
-  if (code <= 3) return "clouds";
-  if (code === 45 || code === 48) return "fog";
-  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
-  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
-  if (code >= 95) return "thunder";
-  return "clouds";
-}
-
-// Apply the gradient + animated scene for the given conditions.
-function applyWeatherTheme(code, isDay, windKmh) {
-  const category = weatherCategory(code);
-  const [top, bottom] = WEATHER_THEMES[category][isDay ? "day" : "night"];
-  document.documentElement.style.setProperty("--gradient-top", top);
-  document.documentElement.style.setProperty("--gradient-bottom", bottom);
-  buildWeatherScene(category, isDay, code, windKmh);
-}
-
 // Build a readable place label from a location object.
 // Current location shows a pin; before reverse geocoding resolves it reads
 // "Your Location", then swaps to the real city once we have a name.
@@ -102,20 +72,16 @@ function updatePlaceName(loc) {
 }
 
 // Render the main current-conditions panel.
-function renderCurrent(loc, data, unit) {
+function renderCurrent(loc, data) {
   const c = data.current;
   const units = data.current_units;
   const { label, icon } = describeWeather(c.weather_code, c.is_day);
 
-  // Normalize wind to km/h (fahrenheit preset returns mph) so cloud motion is
-  // consistent regardless of the unit toggle.
-  const windKmh = unit === "celsius" ? c.wind_speed_10m : c.wind_speed_10m * 1.60934;
-  applyWeatherTheme(c.weather_code, c.is_day, windKmh);
-
   els.currentTemp.classList.remove("pulse");
   els.currentName.innerHTML = placeLabelHtml(loc);
   els.currentTemp.textContent = `${roundTemp(c.temperature_2m)}°`;
-  els.currentCond.textContent = `${icon} ${label}`;
+  els.currentIcon.textContent = icon;
+  els.currentCond.textContent = label;
 
   els.currentMeta.innerHTML = `
     <span>Feels like ${roundTemp(c.apparent_temperature)}°</span>
@@ -189,6 +155,7 @@ function setLoading(loc) {
   els.currentName.innerHTML = loc ? placeLabelHtml(loc) : "Loading…";
   els.currentTemp.textContent = "--°";
   els.currentTemp.classList.add("pulse");
+  els.currentIcon.textContent = "";
   els.currentCond.textContent = "Fetching weather…";
   els.currentMeta.innerHTML = "";
 }
@@ -198,6 +165,7 @@ function showError(message) {
   els.currentTemp.classList.remove("pulse");
   els.currentName.textContent = "Something went wrong";
   els.currentTemp.textContent = "--°";
+  els.currentIcon.textContent = "⚠️";
   els.currentCond.textContent = message || "Unable to load weather.";
   els.currentMeta.innerHTML = "";
   els.hourlySection.hidden = true;

@@ -1,19 +1,21 @@
 /* ===== Design tokens ===== */
 :root {
-  --gradient-top: #4a90d9;
-  --gradient-bottom: #7b4ea8;
-  --glass-bg: rgba(255, 255, 255, 0.14);
-  --glass-border: rgba(255, 255, 255, 0.22);
-  --glass-bg-strong: rgba(255, 255, 255, 0.2);
+  --bg: #1e2023;
+  --panel: #2a2d31;
+  --panel-strong: #34373c;
+  --panel-hover: #3a3e44;
+  --border: rgba(255, 255, 255, 0.08);
   --text: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.72);
-  --text-faint: rgba(255, 255, 255, 0.5);
+  --text-dim: rgba(255, 255, 255, 0.65);
+  --text-faint: rgba(255, 255, 255, 0.42);
   --accent: #ffd166;
+  --accent-blue: #2f5fb3;
+  --accent-blue-hover: #3d70cc;
   --radius: 18px;
   --radius-sm: 12px;
   --sidebar-w: 300px;
   --header-h: 68px;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -34,10 +36,8 @@ body {
 body {
   font-family: var(--font);
   color: var(--text);
-  background: linear-gradient(160deg, var(--gradient-top) 0%, var(--gradient-bottom) 100%);
-  background-attachment: fixed;
+  background: var(--bg);
   min-height: 100vh;
-  transition: background 0.8s ease;
   overflow-x: hidden;
 }
 
@@ -53,14 +53,18 @@ ul {
   list-style: none;
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent-blue-hover);
+  outline-offset: 2px;
+}
+
 /* ===== App grid ===== */
 .app {
   display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr;
   grid-template-rows: var(--header-h) 1fr;
   grid-template-areas:
-    "header header"
-    "sidebar main";
+    "header"
+    "main";
   min-height: 100vh;
 }
 
@@ -71,19 +75,11 @@ ul {
   align-items: center;
   gap: 16px;
   padding: 0 24px;
-  backdrop-filter: blur(12px);
-  background: var(--glass-bg);
-  border-bottom: 1px solid var(--glass-border);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 20;
-}
-
-.menu-btn {
-  display: none;
-  font-size: 1.4rem;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
 }
 
 .search {
@@ -105,8 +101,8 @@ ul {
   width: 100%;
   padding: 11px 16px 11px 42px;
   border-radius: 999px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg-strong);
+  border: 1px solid var(--border);
+  background: var(--panel-strong);
   color: var(--text);
   font-size: 0.98rem;
   outline: none;
@@ -118,8 +114,8 @@ ul {
 }
 
 .search-input:focus {
-  background: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--panel-hover);
+  border-color: var(--accent-blue);
 }
 
 .search-results {
@@ -127,9 +123,8 @@ ul {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: rgba(40, 40, 70, 0.92);
-  backdrop-filter: blur(14px);
-  border: 1px solid var(--glass-border);
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -147,11 +142,11 @@ ul {
 }
 
 .search-item + .search-item {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border);
 }
 
 .search-item:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--panel-hover);
 }
 
 .search-item-name {
@@ -164,7 +159,7 @@ ul {
   border-radius: 2px;
   object-fit: cover;
   vertical-align: -2px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .search-item-sub {
@@ -181,8 +176,8 @@ ul {
 
 .unit-toggle {
   display: flex;
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -196,17 +191,75 @@ ul {
 }
 
 .unit-btn.is-active {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
+  background: var(--accent-blue);
+  color: var(--text);
 }
 
-/* ===== Sidebar ===== */
+/* ===== Sidebar (off-canvas drawer, hidden by default) ===== */
+.sidebar-wrap {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  width: min(85vw, var(--sidebar-w));
+  transform: translateX(-100%);
+  transition: transform 0.28s ease;
+  z-index: 25;
+}
+
+.sidebar-wrap.is-open {
+  transform: translateX(0);
+}
+
+/* Pull-tab attached to the drawer's edge; moves with it via the parent transform. */
+.sidebar-tab {
+  position: absolute;
+  top: 16px;
+  left: 100%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--accent);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  box-shadow: var(--shadow);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.sidebar-tab:hover {
+  background: var(--panel-hover);
+  border-color: var(--accent-blue);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 24;
+}
+
+.sidebar-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .sidebar {
-  grid-area: sidebar;
+  height: 100%;
   padding: 20px 16px;
-  backdrop-filter: blur(12px);
-  background: var(--glass-bg);
-  border-right: 1px solid var(--glass-border);
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
   overflow-y: auto;
 }
 
@@ -238,6 +291,12 @@ ul {
   align-items: stretch;
   padding: 0;
   overflow: hidden;
+  border-left: 3px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.saved-item:hover {
+  border-left-color: var(--accent-blue);
 }
 
 .saved-click {
@@ -257,7 +316,7 @@ ul {
 }
 
 .saved-click:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--panel-hover);
 }
 
 .saved-click .flag {
@@ -324,8 +383,9 @@ ul {
 }
 
 .fallback-hint {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-blue);
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   font-size: 0.85rem;
@@ -366,16 +426,36 @@ ul {
   transform: scale(1.2);
 }
 
+.current-primary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(12px, 3vw, 28px);
+  margin: 8px 0;
+}
+
 .current-temp {
   font-size: clamp(4.5rem, 16vw, 9rem);
   font-weight: 200;
   line-height: 1;
-  margin: 8px 0;
+}
+
+.current-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.current-icon {
+  font-size: clamp(4.5rem, 16vw, 9rem);
+  line-height: 1;
 }
 
 .current-cond {
-  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
   color: var(--text-dim);
+  text-align: center;
 }
 
 .current-meta {
@@ -416,12 +496,11 @@ ul {
   gap: 12px;
 }
 
-/* ===== Glass card base (used by hourly/daily/saved once wired) ===== */
+/* ===== Opaque card base (used by hourly/daily/saved) ===== */
 .card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
 }
 
@@ -501,16 +580,18 @@ ul {
   animation: pulse 1.2s ease-in-out infinite;
 }
 
-/* ===== Card hover lift (hourly / daily) ===== */
+/* ===== Card hover lift + accent border (hourly / daily) ===== */
 .hour,
 .day {
-  transition: transform 0.15s ease, background 0.15s ease;
+  border: 1px solid var(--border);
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .hour:hover,
 .day:hover {
   transform: translateY(-3px);
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--panel-hover);
+  border-color: var(--accent-blue);
 }
 
 /* ===== Fade-in on load ===== */
@@ -541,261 +622,8 @@ ul {
   }
 }
 
-/* ===== Animated weather background ===== */
-.weather-bg {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.app {
-  position: relative;
-  z-index: 1;
-}
-
-/* Keep main-panel text crisp over any animated scene. */
-.current-name,
-.current-temp,
-.current-cond,
-.current-meta,
-.section-title {
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
-}
-
-/* Sun */
-.scene-sun {
-  position: absolute;
-  top: -70px;
-  right: -50px;
-  width: 320px;
-  height: 320px;
-}
-
-.sun-core {
-  position: absolute;
-  inset: 95px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 244, 214, 0.95), rgba(255, 214, 140, 0.5) 55%, rgba(255, 200, 120, 0) 72%);
-  box-shadow: 0 0 90px 34px rgba(255, 222, 155, 0.35);
-  animation: sun-pulse 6s ease-in-out infinite;
-}
-
-.sun-rays {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, rgba(255, 236, 186, 0.18) 0deg 6deg, transparent 6deg 18deg);
-  -webkit-mask: radial-gradient(circle, transparent 62px, #000 64px, #000 150px, transparent 160px);
-  mask: radial-gradient(circle, transparent 62px, #000 64px, #000 150px, transparent 160px);
-  opacity: 0.55;
-  animation: spin 90s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes sun-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.95; }
-  50% { transform: scale(1.06); opacity: 1; }
-}
-
-/* Moon */
-.scene-moon {
-  position: absolute;
-  top: 9%;
-  right: 12%;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #f4f6ff, #ccd6f0 70%);
-  box-shadow: 0 0 44px 12px rgba(220, 230, 255, 0.25), inset -12px -8px 0 rgba(0, 0, 0, 0.06);
-  opacity: 0.9;
-}
-
-/* Stars */
-.star {
-  position: absolute;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
-  animation: twinkle 3s ease-in-out infinite;
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.15; transform: scale(0.8); }
-  50% { opacity: 0.9; transform: scale(1); }
-}
-
-/* Clouds (paper-cut style: crisp edges + soft offset shadow) */
-.cloud {
-  position: absolute;
-  left: 0;
-  filter: drop-shadow(2px 5px 4px rgba(15, 25, 45, 0.22));
-  animation: cloud-drift linear infinite;
-}
-
-.cloud-part {
-  position: absolute;
-  /* size, border-radius and background are set from JS */
-}
-
-/* Large cloud mass — sways gently in place instead of drifting across */
-.cloud-mass {
-  position: absolute;
-  filter: drop-shadow(2px 6px 5px rgba(15, 25, 45, 0.22));
-  animation-name: mass-sway;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
-@keyframes mass-sway {
-  from { transform: translateX(-2.5%); }
-  to { transform: translateX(2.5%); }
-}
-
-/* Overcast blanket — covers most of the sky, soft-faded at the bottom */
-.overcast {
-  position: absolute;
-  top: 0;
-  left: -20%;
-  width: 140%;
-  height: 66%;
-  filter: blur(18px);
-  animation: overcast-sway 44s ease-in-out infinite alternate;
-}
-
-@keyframes overcast-sway {
-  from { transform: translateX(-4%); }
-  to { transform: translateX(4%); }
-}
-
-@keyframes cloud-drift {
-  from { transform: translateX(-60vw); }
-  to { transform: translateX(120vw); }
-}
-
-/* Rain */
-.rain-drop {
-  position: absolute;
-  top: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(200, 220, 255, 0.7));
-  animation: rain-fall linear infinite;
-}
-
-@keyframes rain-fall {
-  from { transform: translateY(-20vh); }
-  to { transform: translateY(120vh); }
-}
-
-/* Snow */
-.snow-flake {
-  position: absolute;
-  top: 0;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
-  animation: snow-fall linear infinite;
-}
-
-@keyframes snow-fall {
-  from { transform: translate(0, -10vh); }
-  to { transform: translate(var(--dx, 0), 110vh); }
-}
-
-/* Fog */
-.fog-band {
-  position: absolute;
-  left: -20%;
-  width: 140%;
-  height: 120px;
-  background: linear-gradient(90deg, transparent, rgba(230, 235, 240, 0.5), transparent);
-  filter: blur(18px);
-  animation: fog-drift linear infinite alternate;
-}
-
-@keyframes fog-drift {
-  from { transform: translateX(-12%); }
-  to { transform: translateX(12%); }
-}
-
-/* Lightning */
-.lightning-flash {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.85), rgba(200, 215, 255, 0.28) 42%, transparent 72%);
-  opacity: 0;
-}
-
-.lightning-flash.strike {
-  animation: flash-sky 0.85s ease-out;
-}
-
-.bolt {
-  position: absolute;
-  top: 0;
-  height: 90vh;
-  width: 30vh;
-  opacity: 0;
-  filter: drop-shadow(0 0 6px rgba(205, 225, 255, 0.9)) drop-shadow(0 0 18px rgba(150, 185, 255, 0.55));
-}
-
-.bolt.strike {
-  animation: flash-bolt 0.85s ease-out;
-}
-
-.bolt svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-}
-
-.bolt-line {
-  fill: none;
-  stroke: #f2f6ff;
-  stroke-width: 3.4;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-@keyframes flash-sky {
-  0% { opacity: 0; }
-  6% { opacity: 0.85; }
-  12% { opacity: 0.15; }
-  18% { opacity: 0.6; }
-  28% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-@keyframes flash-bolt {
-  0% { opacity: 0; }
-  4% { opacity: 1; }
-  10% { opacity: 0.25; }
-  15% { opacity: 0.95; }
-  26% { opacity: 0; }
-  100% { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .weather-bg * {
-    animation: none !important;
-  }
-}
-
 /* ===== Responsive ===== */
 @media (max-width: 760px) {
-  .app {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "header"
-      "main";
-  }
-
   .header {
     gap: 10px;
     padding: 0 14px;
@@ -807,25 +635,5 @@ ul {
 
   .unit-btn {
     padding: 8px 12px;
-  }
-
-  .menu-btn {
-    display: block;
-  }
-
-  .sidebar {
-    position: fixed;
-    top: var(--header-h);
-    left: 0;
-    bottom: 0;
-    width: min(80vw, var(--sidebar-w));
-    transform: translateX(-100%);
-    transition: transform 0.28s ease;
-    z-index: 15;
-    box-shadow: var(--shadow);
-  }
-
-  .sidebar.is-open {
-    transform: translateX(0);
   }
 }

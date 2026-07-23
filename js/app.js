@@ -97,7 +97,7 @@ async function loadWeather(location, fallback = null) {
       unit: state.unit,
     });
     state.data = data;
-    renderCurrent(location, data, state.unit);
+    renderCurrent(location, data);
     renderHourly(data);
     renderDaily(data);
     updateSaveButton();
@@ -153,6 +153,13 @@ function refreshSaved() {
   });
 }
 
+// Open/close the saved-locations drawer and keep the tab + backdrop in sync.
+function setSidebarOpen(open) {
+  document.getElementById("sidebar-wrap").classList.toggle("is-open", open);
+  document.getElementById("sidebar-backdrop").classList.toggle("is-open", open);
+  document.getElementById("sidebar-tab").setAttribute("aria-expanded", String(open));
+}
+
 // Reflect the active unit in the toggle UI.
 function syncUnitToggle() {
   document.querySelectorAll(".unit-btn").forEach((btn) => {
@@ -183,11 +190,18 @@ function selectSearchResult(index) {
 }
 
 function wireEvents() {
-  // Sidebar toggle (mobile).
-  const menuBtn = document.getElementById("menu-btn");
-  const sidebar = document.getElementById("sidebar");
-  if (menuBtn && sidebar) {
-    menuBtn.addEventListener("click", () => sidebar.classList.toggle("is-open"));
+  // Sidebar: hidden by default, revealed via the star tab.
+  const sidebarWrap = document.getElementById("sidebar-wrap");
+  const sidebarTab = document.getElementById("sidebar-tab");
+  const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+  if (sidebarWrap && sidebarTab && sidebarBackdrop) {
+    sidebarTab.addEventListener("click", () => {
+      setSidebarOpen(!sidebarWrap.classList.contains("is-open"));
+    });
+    sidebarBackdrop.addEventListener("click", () => setSidebarOpen(false));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    });
   }
 
   // Search: debounced geocoding as the user types.
@@ -272,7 +286,7 @@ function wireEvents() {
       refreshSaved();
     } else {
       loadWeather(loc);
-      document.getElementById("sidebar").classList.remove("is-open"); // close on mobile
+      setSidebarOpen(false);
     }
   });
 

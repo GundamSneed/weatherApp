@@ -11,13 +11,9 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <!-- Animated weather background (behind everything, non-interactive) -->
-  <div class="weather-bg" id="weather-bg" aria-hidden="true"></div>
-
   <div class="app">
     <!-- Header: search + unit toggle -->
     <header class="header">
-      <button class="menu-btn" id="menu-btn" aria-label="Toggle saved locations">☰</button>
       <div class="search">
         <span class="search-icon" aria-hidden="true">🔍</span>
         <input
@@ -36,14 +32,24 @@
       </div>
     </header>
 
-    <!-- Sidebar: saved locations -->
-    <aside class="sidebar" id="sidebar">
-      <h2 class="sidebar-title">Saved</h2>
-      <ul class="saved-list" id="saved-list">
-        <!-- saved location cards injected here -->
-      </ul>
-      <p class="saved-empty" id="saved-empty">No saved locations yet. Search a city and tap the ★ to save it.</p>
-    </aside>
+    <!-- Sidebar: saved locations, hidden by default, revealed via the star tab -->
+    <div class="sidebar-wrap" id="sidebar-wrap">
+      <button
+        class="sidebar-tab"
+        id="sidebar-tab"
+        aria-label="Show saved locations"
+        aria-expanded="false"
+        aria-controls="sidebar"
+      >★</button>
+      <aside class="sidebar" id="sidebar">
+        <h2 class="sidebar-title">Saved</h2>
+        <ul class="saved-list" id="saved-list">
+          <!-- saved location cards injected here -->
+        </ul>
+        <p class="saved-empty" id="saved-empty">No saved locations yet. Search a city and tap the ★ to save it.</p>
+      </aside>
+    </div>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
     <!-- Main: current weather + forecasts -->
     <main class="main" id="main">
@@ -54,8 +60,13 @@
           <h1 class="current-name" id="current-name">—</h1>
           <button class="save-btn" id="save-btn" aria-label="Save this location" hidden>☆</button>
         </div>
-        <div class="current-temp" id="current-temp">--°</div>
-        <div class="current-cond" id="current-cond">—</div>
+        <div class="current-primary">
+          <div class="current-temp" id="current-temp">--°</div>
+          <div class="current-status">
+            <span class="current-icon" id="current-icon"></span>
+            <span class="current-cond" id="current-cond">—</span>
+          </div>
+        </div>
         <div class="current-meta" id="current-meta"></div>
       </section>
 
@@ -72,7 +83,6 @@
   </div>
 
   <script src="js/weatherCodes.js"></script>
-  <script src="js/weatherScene.js"></script>
   <script src="js/api.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/ui.js"></script>
