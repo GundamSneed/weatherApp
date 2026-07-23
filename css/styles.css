@@ -629,18 +629,17 @@ ul {
   50% { opacity: 0.9; transform: scale(1); }
 }
 
-/* Clouds (built from overlapping puffs for a defined shape) */
+/* Clouds (paper-cut style: crisp edges + soft offset shadow) */
 .cloud {
   position: absolute;
   left: 0;
-  filter: blur(1.5px) drop-shadow(0 8px 10px rgba(25, 35, 55, 0.14));
+  filter: drop-shadow(2px 5px 4px rgba(15, 25, 45, 0.22));
   animation: cloud-drift linear infinite;
 }
 
-.puff {
+.cloud-part {
   position: absolute;
-  border-radius: 50%;
-  /* background color is set per-scene from JS */
+  /* size, border-radius and background are set from JS */
 }
 
 /* Overcast blanket — covers most of the sky, soft-faded at the bottom */

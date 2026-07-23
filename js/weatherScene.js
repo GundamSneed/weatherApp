@@ -55,35 +55,50 @@ function addStars(root, count) {
   }
 }
 
-// Build a single defined cloud from overlapping circular "puffs".
-// Puffs are large and heavily overlapping so the cloud reads as one dense mass.
+// Build a single "paper-cut" style cloud: a flat-bottomed base (stadium) with
+// rounded lobes on top. Lobe count, sizes and an off-center peak are randomized
+// so clouds take on a variety of shapes.
 function makeCloud(w, opacity, color) {
-  const h = w * 0.6;
+  const H = w * 0.6;
   const cloud = sceneEl("cloud", {
     width: `${w}px`,
-    height: `${h}px`,
+    height: `${H}px`,
     opacity: `${opacity}`,
   });
-  // [centerX, centerY, radius] as fractions of the cloud box.
-  const puffs = [
-    [0.16, 0.64, 0.46],
-    [0.36, 0.42, 0.58],
-    [0.56, 0.46, 0.56],
-    [0.78, 0.62, 0.48],
-    [0.50, 0.72, 0.64],
-  ];
-  puffs.forEach(([cx, cy, r]) => {
-    const d = r * w;
+
+  // Flat-bottomed base with rounded ends.
+  const barH = H * 0.5;
+  cloud.appendChild(
+    sceneEl("cloud-part", {
+      left: `${w * 0.05}px`,
+      top: `${H - barH}px`,
+      width: `${w * 0.9}px`,
+      height: `${barH}px`,
+      borderRadius: `${barH / 2}px`,
+      background: color,
+    })
+  );
+
+  // Rounded lobes across the top; largest near a randomized peak.
+  const n = Math.round(rand(3, 5));
+  const peak = rand(0.35, 0.6);
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const cx = 0.14 + t * 0.72;
+    const bias = Math.max(0, 1 - Math.abs(t - peak) * 1.6);
+    const dia = (0.28 + 0.24 * bias) * w * rand(0.9, 1.08);
+    const bottom = H * rand(0.78, 0.86);
     cloud.appendChild(
-      sceneEl("puff", {
-        width: `${d}px`,
-        height: `${d}px`,
-        left: `${cx * w - d / 2}px`,
-        top: `${cy * h - d / 2}px`,
+      sceneEl("cloud-part", {
+        left: `${cx * w - dia / 2}px`,
+        top: `${bottom - dia}px`,
+        width: `${dia}px`,
+        height: `${dia}px`,
+        borderRadius: "50%",
         background: color,
       })
     );
-  });
+  }
   return cloud;
 }
 
@@ -259,12 +274,12 @@ function buildWeatherScene(category, isDay, code) {
       if (!isDay && !overcast) addStars(root, 16);
       if (overcast) addOvercast(root, cloudColor, isDay ? 0.5 : 0.62);
       addClouds(root, {
-        count: calm ? 6 : overcast ? (isDay ? 14 : 12) : isDay ? 8 : 7,
-        opacity: isDay ? 0.9 : 0.82,
-        speed: 180,
+        count: calm ? 9 : overcast ? (isDay ? 22 : 18) : isDay ? 13 : 11,
+        opacity: isDay ? 0.92 : 0.85,
+        speed: 185,
         color: cloudColor,
-        topRange: overcast ? [0, 30] : [0, 48],
-        size: overcast ? [230, 450] : [170, 320],
+        topRange: overcast ? [0, 40] : [0, 52],
+        size: overcast ? [230, 460] : [180, 340],
       });
       break;
     }
@@ -282,36 +297,36 @@ function buildWeatherScene(category, isDay, code) {
 
     case "rain":
       addClouds(root, {
-        count: 9,
-        opacity: isDay ? 0.85 : 0.75,
+        count: 15,
+        opacity: isDay ? 0.88 : 0.78,
         speed: 150,
         color: isDay ? "#6c7a8c" : "#3c4553",
-        topRange: [0, 34],
-        size: [220, 430],
+        topRange: [0, 40],
+        size: [220, 440],
       });
       if (!calm) addRain(root, 70);
       break;
 
     case "snow":
       addClouds(root, {
-        count: 7,
-        opacity: isDay ? 0.82 : 0.72,
+        count: 12,
+        opacity: isDay ? 0.85 : 0.75,
         speed: 170,
         color: isDay ? "#8894a6" : "#4a5566",
-        topRange: [0, 34],
-        size: [200, 380],
+        topRange: [0, 40],
+        size: [200, 390],
       });
       addSnow(root, calm ? 18 : 45);
       break;
 
     case "thunder":
       addClouds(root, {
-        count: 10,
-        opacity: 0.85,
+        count: 16,
+        opacity: 0.88,
         speed: 140,
         color: "#434d5c",
-        topRange: [0, 34],
-        size: [230, 450],
+        topRange: [0, 40],
+        size: [230, 460],
       });
       if (!calm) {
         addRain(root, 60);
@@ -320,6 +335,6 @@ function buildWeatherScene(category, isDay, code) {
       break;
 
     default:
-      addClouds(root, { count: 6, opacity: 0.7, speed: 170, color: cloudColor });
+      addClouds(root, { count: 9, opacity: 0.75, speed: 170, color: cloudColor });
   }
 }
