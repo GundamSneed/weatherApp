@@ -123,6 +123,69 @@ function addClouds(
   }
 }
 
+// Build one very large cloud mass (wide bank): flat base + many rounded lobes
+// spread across the width, for a bumpy cloud-bank ridge.
+function makeCloudMass(w, h, color, opacity) {
+  const mass = sceneEl("cloud-mass", {
+    width: `${w}px`,
+    height: `${h}px`,
+    opacity: `${opacity}`,
+  });
+
+  const barH = h * 0.55;
+  mass.appendChild(
+    sceneEl("cloud-part", {
+      left: `${w * 0.03}px`,
+      top: `${h - barH}px`,
+      width: `${w * 0.94}px`,
+      height: `${barH}px`,
+      borderRadius: `${barH / 2}px`,
+      background: color,
+    })
+  );
+
+  const n = Math.max(6, Math.round(w / (h * 0.55)));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const cx = 0.05 + t * 0.9;
+    const dia = h * rand(0.5, 0.95);
+    const bottom = h * rand(0.72, 0.9);
+    mass.appendChild(
+      sceneEl("cloud-part", {
+        left: `${cx * w - dia / 2}px`,
+        top: `${bottom - dia}px`,
+        width: `${dia}px`,
+        height: `${dia}px`,
+        borderRadius: "50%",
+        background: color,
+      })
+    );
+  }
+  return mass;
+}
+
+// Add 1-2 very large cloud masses covering the upper sky (used for heavy
+// conditions instead of many small drifting clouds). Masses sway gently.
+function addCloudMasses(root, { color, opacity = 0.9 } = {}) {
+  const vw = window.innerWidth || 1200;
+  const vh = window.innerHeight || 800;
+  const count = Math.random() < 0.4 ? 1 : 2;
+  for (let i = 0; i < count; i++) {
+    const w = count === 1 ? vw * rand(1.05, 1.3) : vw * rand(0.72, 0.95);
+    const h = vh * rand(0.36, 0.5);
+    const mass = makeCloudMass(w, h, color, opacity * rand(0.94, 1));
+    const left =
+      count === 1 ? (vw - w) / 2 : i === 0 ? -w * 0.12 : vw - w * 0.88;
+    Object.assign(mass.style, {
+      top: `${-h * rand(0.15, 0.32)}px`,
+      left: `${left}px`,
+      animationDuration: `${rand(55, 85)}s`,
+      animationDelay: `${-rand(0, 40)}s`,
+    });
+    root.appendChild(mass);
+  }
+}
+
 // A broad, soft cloud blanket for overcast skies (covers most of the sky).
 function addOvercast(root, color, opacity) {
   root.appendChild(
@@ -271,16 +334,22 @@ function buildWeatherScene(category, isDay, code) {
 
     case "clouds": {
       const overcast = code === 3; // 2 = partly cloudy, 3 = overcast
-      if (!isDay && !overcast) addStars(root, 16);
-      if (overcast) addOvercast(root, cloudColor, isDay ? 0.5 : 0.62);
-      addClouds(root, {
-        count: calm ? 9 : overcast ? (isDay ? 22 : 18) : isDay ? 13 : 11,
-        opacity: isDay ? 0.92 : 0.85,
-        speed: 185,
-        color: cloudColor,
-        topRange: overcast ? [0, 40] : [0, 52],
-        size: overcast ? [230, 460] : [180, 340],
-      });
+      if (overcast) {
+        // Heavy sky: one or two large masses (+ soft blanket) instead of many.
+        addOvercast(root, cloudColor, isDay ? 0.5 : 0.62);
+        addCloudMasses(root, { color: cloudColor, opacity: isDay ? 0.95 : 0.9 });
+      } else {
+        // Partly cloudy: a handful of discrete drifting clouds.
+        if (!isDay) addStars(root, 16);
+        addClouds(root, {
+          count: calm ? 6 : isDay ? 12 : 10,
+          opacity: isDay ? 0.92 : 0.85,
+          speed: 185,
+          color: cloudColor,
+          topRange: [0, 52],
+          size: [180, 340],
+        });
+      }
       break;
     }
 
@@ -296,38 +365,17 @@ function buildWeatherScene(category, isDay, code) {
       break;
 
     case "rain":
-      addClouds(root, {
-        count: 15,
-        opacity: isDay ? 0.88 : 0.78,
-        speed: 150,
-        color: isDay ? "#6c7a8c" : "#3c4553",
-        topRange: [0, 40],
-        size: [220, 440],
-      });
+      addCloudMasses(root, { color: isDay ? "#6c7a8c" : "#3c4553", opacity: isDay ? 0.92 : 0.82 });
       if (!calm) addRain(root, 70);
       break;
 
     case "snow":
-      addClouds(root, {
-        count: 12,
-        opacity: isDay ? 0.85 : 0.75,
-        speed: 170,
-        color: isDay ? "#8894a6" : "#4a5566",
-        topRange: [0, 40],
-        size: [200, 390],
-      });
+      addCloudMasses(root, { color: isDay ? "#8894a6" : "#4a5566", opacity: isDay ? 0.9 : 0.8 });
       addSnow(root, calm ? 18 : 45);
       break;
 
     case "thunder":
-      addClouds(root, {
-        count: 16,
-        opacity: 0.88,
-        speed: 140,
-        color: "#434d5c",
-        topRange: [0, 40],
-        size: [230, 460],
-      });
+      addCloudMasses(root, { color: "#434d5c", opacity: 0.9 });
       if (!calm) {
         addRain(root, 60);
         addLightning(root);

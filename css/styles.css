@@ -642,6 +642,21 @@ ul {
   /* size, border-radius and background are set from JS */
 }
 
+/* Large cloud mass — sways gently in place instead of drifting across */
+.cloud-mass {
+  position: absolute;
+  filter: drop-shadow(2px 6px 5px rgba(15, 25, 45, 0.22));
+  animation-name: mass-sway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes mass-sway {
+  from { transform: translateX(-2.5%); }
+  to { transform: translateX(2.5%); }
+}
+
 /* Overcast blanket — covers most of the sky, soft-faded at the bottom */
 .overcast {
   position: absolute;
