@@ -56,8 +56,9 @@ function addStars(root, count) {
 }
 
 // Build a single defined cloud from overlapping circular "puffs".
-function makeCloud(w, opacity) {
-  const h = w * 0.66;
+// Puffs are large and heavily overlapping so the cloud reads as one dense mass.
+function makeCloud(w, opacity, color) {
+  const h = w * 0.6;
   const cloud = sceneEl("cloud", {
     width: `${w}px`,
     height: `${h}px`,
@@ -65,11 +66,11 @@ function makeCloud(w, opacity) {
   });
   // [centerX, centerY, radius] as fractions of the cloud box.
   const puffs = [
-    [0.20, 0.66, 0.36],
-    [0.40, 0.42, 0.48],
-    [0.60, 0.46, 0.44],
-    [0.80, 0.64, 0.34],
-    [0.50, 0.74, 0.52],
+    [0.16, 0.64, 0.46],
+    [0.36, 0.42, 0.58],
+    [0.56, 0.46, 0.56],
+    [0.78, 0.62, 0.48],
+    [0.50, 0.72, 0.64],
   ];
   puffs.forEach(([cx, cy, r]) => {
     const d = r * w;
@@ -79,23 +80,42 @@ function makeCloud(w, opacity) {
         height: `${d}px`,
         left: `${cx * w - d / 2}px`,
         top: `${cy * h - d / 2}px`,
+        background: color,
       })
     );
   });
   return cloud;
 }
 
-// Drifting clouds. count/opacity/speed vary the mood by scene.
-function addClouds(root, { count = 5, opacity = 0.5, speed = 60 } = {}) {
+// Drifting clouds. Darker `color`, slower `speed`, and tunable spread/size let
+// each scene control mood and coverage.
+function addClouds(
+  root,
+  { count = 5, opacity = 0.7, speed = 160, color = "#7c8ba0", topRange = [0, 55], size = [160, 300] } = {}
+) {
+  const calm = prefersReducedMotion();
   for (let i = 0; i < count; i++) {
-    const cloud = makeCloud(rand(150, 300), opacity * rand(0.82, 1));
+    const cloud = makeCloud(rand(size[0], size[1]), opacity * rand(0.85, 1), color);
     Object.assign(cloud.style, {
-      top: `${rand(0, 60)}%`,
-      animationDuration: `${speed * rand(0.7, 1.3)}s`,
+      top: `${rand(topRange[0], topRange[1])}%`,
+      animationDuration: `${speed * rand(0.8, 1.25)}s`,
       animationDelay: `${-rand(0, speed)}s`,
     });
+    // With animations disabled (reduced motion), spread clouds statically
+    // instead of leaving them stacked at the drift start position.
+    if (calm) cloud.style.left = `${rand(-5, 80)}%`;
     root.appendChild(cloud);
   }
+}
+
+// A broad, soft cloud blanket for overcast skies (covers most of the sky).
+function addOvercast(root, color, opacity) {
+  root.appendChild(
+    sceneEl("overcast", {
+      background: `linear-gradient(to bottom, ${color} 0%, ${color} 52%, transparent 100%)`,
+      opacity: `${opacity}`,
+    })
+  );
 }
 
 function addRain(root, count) {
@@ -208,7 +228,7 @@ function addLightning(root) {
 
 // --- Scene composition -------------------------------------------------------
 
-function buildWeatherScene(category, isDay) {
+function buildWeatherScene(category, isDay, code) {
   const root = document.getElementById(SCENE_ROOT_ID);
   if (!root) return;
   clearSceneTimers();
@@ -218,43 +238,81 @@ function buildWeatherScene(category, isDay) {
   // Reduced motion: keep only calm, static-ish ambience (sun/moon/stars, few clouds).
   const calm = prefersReducedMotion();
 
+  // Cloud colors — darker than the text so white readouts stay legible.
+  const cloudColor = isDay ? "#7c8ba0" : "#464f60";
+
   switch (category) {
     case "clear":
       if (isDay) {
         addSun(root);
-        if (!calm) addClouds(root, { count: 3, opacity: 0.55, speed: 90 });
+        if (!calm) {
+          addClouds(root, { count: 3, opacity: 0.5, speed: 210, color: "#c3cdda", topRange: [2, 40], size: [150, 260] });
+        }
       } else {
         addStars(root, calm ? 30 : 60);
         addMoon(root);
       }
       break;
 
-    case "clouds":
-      if (!isDay) addStars(root, 22);
+    case "clouds": {
+      const overcast = code === 3; // 2 = partly cloudy, 3 = overcast
+      if (!isDay && !overcast) addStars(root, 16);
+      if (overcast) addOvercast(root, cloudColor, isDay ? 0.5 : 0.62);
       addClouds(root, {
-        count: calm ? 6 : isDay ? 12 : 9,
-        opacity: isDay ? 0.92 : 0.55,
-        speed: 75,
+        count: calm ? 6 : overcast ? (isDay ? 14 : 12) : isDay ? 8 : 7,
+        opacity: isDay ? 0.9 : 0.82,
+        speed: 180,
+        color: cloudColor,
+        topRange: overcast ? [0, 30] : [0, 48],
+        size: overcast ? [230, 450] : [170, 320],
       });
       break;
+    }
 
     case "fog":
       addFog(root);
-      addClouds(root, { count: 4, opacity: 0.4, speed: 90 });
+      addClouds(root, {
+        count: 4,
+        opacity: 0.45,
+        speed: 210,
+        color: isDay ? "#aab3c0" : "#565f6d",
+        topRange: [0, 50],
+      });
       break;
 
     case "rain":
-      addClouds(root, { count: 7, opacity: isDay ? 0.7 : 0.5, speed: 55 });
+      addClouds(root, {
+        count: 9,
+        opacity: isDay ? 0.85 : 0.75,
+        speed: 150,
+        color: isDay ? "#6c7a8c" : "#3c4553",
+        topRange: [0, 34],
+        size: [220, 430],
+      });
       if (!calm) addRain(root, 70);
       break;
 
     case "snow":
-      addClouds(root, { count: 6, opacity: isDay ? 0.7 : 0.5, speed: 70 });
+      addClouds(root, {
+        count: 7,
+        opacity: isDay ? 0.82 : 0.72,
+        speed: 170,
+        color: isDay ? "#8894a6" : "#4a5566",
+        topRange: [0, 34],
+        size: [200, 380],
+      });
       addSnow(root, calm ? 18 : 45);
       break;
 
     case "thunder":
-      addClouds(root, { count: 8, opacity: 0.6, speed: 50 });
+      addClouds(root, {
+        count: 10,
+        opacity: 0.85,
+        speed: 140,
+        color: "#434d5c",
+        topRange: [0, 34],
+        size: [230, 450],
+      });
       if (!calm) {
         addRain(root, 60);
         addLightning(root);
@@ -262,6 +320,6 @@ function buildWeatherScene(category, isDay) {
       break;
 
     default:
-      addClouds(root, { count: 5, opacity: 0.4, speed: 70 });
+      addClouds(root, { count: 6, opacity: 0.7, speed: 170, color: cloudColor });
   }
 }
