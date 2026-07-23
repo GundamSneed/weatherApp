@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <!-- Animated weather background (behind everything, non-interactive) -->
+  <div class="weather-bg" id="weather-bg" aria-hidden="true"></div>
+
   <div class="app">
     <!-- Header: search + unit toggle -->
     <header class="header">
@@ -67,6 +70,7 @@
   </div>
 
   <script src="js/weatherCodes.js"></script>
+  <script src="js/weatherScene.js"></script>
   <script src="js/api.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/ui.js"></script>

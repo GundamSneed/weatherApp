@@ -541,6 +541,207 @@ ul {
   }
 }
 
+/* ===== Animated weather background ===== */
+.weather-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+}
+
+/* Keep main-panel text crisp over any animated scene. */
+.current-name,
+.current-temp,
+.current-cond,
+.current-meta,
+.section-title {
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
+}
+
+/* Sun */
+.scene-sun {
+  position: absolute;
+  top: -70px;
+  right: -50px;
+  width: 320px;
+  height: 320px;
+}
+
+.sun-core {
+  position: absolute;
+  inset: 95px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 244, 214, 0.95), rgba(255, 214, 140, 0.5) 55%, rgba(255, 200, 120, 0) 72%);
+  box-shadow: 0 0 90px 34px rgba(255, 222, 155, 0.35);
+  animation: sun-pulse 6s ease-in-out infinite;
+}
+
+.sun-rays {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 236, 186, 0.18) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(circle, transparent 62px, #000 64px, #000 150px, transparent 160px);
+  mask: radial-gradient(circle, transparent 62px, #000 64px, #000 150px, transparent 160px);
+  opacity: 0.55;
+  animation: spin 90s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sun-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+/* Moon */
+.scene-moon {
+  position: absolute;
+  top: 9%;
+  right: 12%;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f4f6ff, #ccd6f0 70%);
+  box-shadow: 0 0 44px 12px rgba(220, 230, 255, 0.25), inset -12px -8px 0 rgba(0, 0, 0, 0.06);
+  opacity: 0.9;
+}
+
+/* Stars */
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1); }
+}
+
+/* Clouds */
+.cloud {
+  position: absolute;
+  left: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  filter: blur(8px);
+  animation: cloud-drift linear infinite;
+}
+
+@keyframes cloud-drift {
+  from { transform: translateX(-60vw); }
+  to { transform: translateX(120vw); }
+}
+
+/* Rain */
+.rain-drop {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(200, 220, 255, 0.7));
+  animation: rain-fall linear infinite;
+}
+
+@keyframes rain-fall {
+  from { transform: translateY(-20vh); }
+  to { transform: translateY(120vh); }
+}
+
+/* Snow */
+.snow-flake {
+  position: absolute;
+  top: 0;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+  animation: snow-fall linear infinite;
+}
+
+@keyframes snow-fall {
+  from { transform: translate(0, -10vh); }
+  to { transform: translate(var(--dx, 0), 110vh); }
+}
+
+/* Fog */
+.fog-band {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 120px;
+  background: linear-gradient(90deg, transparent, rgba(230, 235, 240, 0.5), transparent);
+  filter: blur(18px);
+  animation: fog-drift linear infinite alternate;
+}
+
+@keyframes fog-drift {
+  from { transform: translateX(-12%); }
+  to { transform: translateX(12%); }
+}
+
+/* Lightning */
+.lightning-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9), rgba(200, 210, 255, 0.3) 40%, transparent 70%);
+  opacity: 0;
+  animation: lightning 9s linear infinite;
+}
+
+@keyframes lightning {
+  0%, 47%, 100% { opacity: 0; }
+  2% { opacity: 0.9; }
+  4% { opacity: 0.1; }
+  5% { opacity: 0.7; }
+  7% { opacity: 0; }
+  50% { opacity: 0.6; }
+  52% { opacity: 0; }
+}
+
+.bolt {
+  position: absolute;
+  top: 3%;
+  width: 46px;
+  height: 150px;
+  opacity: 0;
+  filter: drop-shadow(0 0 10px rgba(210, 225, 255, 0.9));
+  animation: bolt-flash 9s linear infinite;
+}
+
+.bolt svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bolt polygon {
+  fill: rgba(245, 248, 255, 0.95);
+}
+
+@keyframes bolt-flash {
+  0%, 100% { opacity: 0; }
+  2% { opacity: 1; }
+  6% { opacity: 0; }
+  50% { opacity: 0.9; }
+  53% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-bg * {
+    animation: none !important;
+  }
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 760px) {
   .app {

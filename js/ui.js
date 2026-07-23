@@ -62,11 +62,13 @@ function weatherCategory(code) {
   return "clouds";
 }
 
-// Apply the gradient for the given conditions to the page background.
+// Apply the gradient + animated scene for the given conditions.
 function applyWeatherTheme(code, isDay) {
-  const [top, bottom] = WEATHER_THEMES[weatherCategory(code)][isDay ? "day" : "night"];
+  const category = weatherCategory(code);
+  const [top, bottom] = WEATHER_THEMES[category][isDay ? "day" : "night"];
   document.documentElement.style.setProperty("--gradient-top", top);
   document.documentElement.style.setProperty("--gradient-bottom", bottom);
+  buildWeatherScene(category, isDay);
 }
 
 // Build a readable place label from a location object.
