@@ -55,51 +55,59 @@ function addStars(root, count) {
   }
 }
 
-// Build a single "paper-cut" style cloud: a flat-bottomed base (stadium) with
-// rounded lobes on top. Lobe count, sizes and an off-center peak are randomized
-// so clouds take on a variety of shapes.
-function makeCloud(w, opacity, color) {
-  const H = w * 0.6;
-  const cloud = sceneEl("cloud", {
+// Build a blobby cloud silhouette from overlapping circles — lumpy all around
+// (bumps on top AND bottom, no flat edge). A connected core row keeps the
+// silhouette in one piece; bump counts/sizes are randomized for varied shapes.
+// Shared by both small clouds and large masses.
+function makeCloudShape(w, h, color, opacity, className) {
+  const cloud = sceneEl(className, {
     width: `${w}px`,
-    height: `${H}px`,
+    height: `${h}px`,
     opacity: `${opacity}`,
   });
 
-  // Flat-bottomed base with rounded ends.
-  const barH = H * 0.5;
-  cloud.appendChild(
-    sceneEl("cloud-part", {
-      left: `${w * 0.05}px`,
-      top: `${H - barH}px`,
-      width: `${w * 0.9}px`,
-      height: `${barH}px`,
-      borderRadius: `${barH / 2}px`,
-      background: color,
-    })
-  );
-
-  // Rounded lobes across the top; largest near a randomized peak.
-  const n = Math.round(rand(3, 5));
-  const peak = rand(0.35, 0.6);
-  for (let i = 0; i < n; i++) {
-    const t = (i + 0.5) / n;
-    const cx = 0.14 + t * 0.72;
-    const bias = Math.max(0, 1 - Math.abs(t - peak) * 1.6);
-    const dia = (0.28 + 0.24 * bias) * w * rand(0.9, 1.08);
-    const bottom = H * rand(0.78, 0.86);
+  const circle = (x, y, dia) => {
     cloud.appendChild(
       sceneEl("cloud-part", {
-        left: `${cx * w - dia / 2}px`,
-        top: `${bottom - dia}px`,
+        left: `${x - dia / 2}px`,
+        top: `${y - dia / 2}px`,
         width: `${dia}px`,
         height: `${dia}px`,
         borderRadius: "50%",
         background: color,
       })
     );
+  };
+
+  const spread = (i, n, lo, hi) =>
+    w * (lo + (hi - lo) * (n === 1 ? 0.5 : (i + rand(-0.3, 0.3)) / (n - 1)));
+
+  // Connected core row along the middle.
+  const coreDia = h * 0.82;
+  const step = coreDia * 0.52;
+  for (let x = coreDia * 0.5 + w * 0.02; x <= w - coreDia * 0.5 - w * 0.02; x += step) {
+    circle(x + rand(-step * 0.25, step * 0.25), h * rand(0.46, 0.56), coreDia * rand(0.92, 1.06));
   }
+
+  // Top bumps.
+  const topN = Math.max(3, Math.round(w / (h * 0.7)));
+  for (let i = 0; i < topN; i++) {
+    circle(spread(i, topN, 0.1, 0.9), h * rand(0.28, 0.42), h * rand(0.46, 0.76));
+  }
+
+  // Bottom bumps (scalloped bottom — no flat edge).
+  const botN = Math.max(2, Math.round(w / (h * 0.95)));
+  for (let i = 0; i < botN; i++) {
+    circle(spread(i, botN, 0.14, 0.86), h * rand(0.62, 0.74), h * rand(0.34, 0.56));
+  }
+
   return cloud;
+}
+
+// Small drifting cloud. Aspect ratio varies per cloud for extra shape variety.
+function makeCloud(w, opacity, color) {
+  const h = w * rand(0.5, 0.66);
+  return makeCloudShape(w, h, color, opacity, "cloud");
 }
 
 // Drifting clouds. Darker `color`, slower `speed`, and tunable spread/size let
@@ -123,45 +131,9 @@ function addClouds(
   }
 }
 
-// Build one very large cloud mass (wide bank): flat base + many rounded lobes
-// spread across the width, for a bumpy cloud-bank ridge.
+// Build one very large cloud mass (wide, lumpy bank) using the shared shape.
 function makeCloudMass(w, h, color, opacity) {
-  const mass = sceneEl("cloud-mass", {
-    width: `${w}px`,
-    height: `${h}px`,
-    opacity: `${opacity}`,
-  });
-
-  const barH = h * 0.55;
-  mass.appendChild(
-    sceneEl("cloud-part", {
-      left: `${w * 0.03}px`,
-      top: `${h - barH}px`,
-      width: `${w * 0.94}px`,
-      height: `${barH}px`,
-      borderRadius: `${barH / 2}px`,
-      background: color,
-    })
-  );
-
-  const n = Math.max(6, Math.round(w / (h * 0.55)));
-  for (let i = 0; i < n; i++) {
-    const t = (i + 0.5) / n;
-    const cx = 0.05 + t * 0.9;
-    const dia = h * rand(0.5, 0.95);
-    const bottom = h * rand(0.72, 0.9);
-    mass.appendChild(
-      sceneEl("cloud-part", {
-        left: `${cx * w - dia / 2}px`,
-        top: `${bottom - dia}px`,
-        width: `${dia}px`,
-        height: `${dia}px`,
-        borderRadius: "50%",
-        background: color,
-      })
-    );
-  }
-  return mass;
+  return makeCloudShape(w, h, color, opacity, "cloud-mass");
 }
 
 // Add 1-2 very large cloud masses covering the upper sky (used for heavy
