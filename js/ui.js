@@ -63,12 +63,12 @@ function weatherCategory(code) {
 }
 
 // Apply the gradient + animated scene for the given conditions.
-function applyWeatherTheme(code, isDay) {
+function applyWeatherTheme(code, isDay, windKmh) {
   const category = weatherCategory(code);
   const [top, bottom] = WEATHER_THEMES[category][isDay ? "day" : "night"];
   document.documentElement.style.setProperty("--gradient-top", top);
   document.documentElement.style.setProperty("--gradient-bottom", bottom);
-  buildWeatherScene(category, isDay, code);
+  buildWeatherScene(category, isDay, code, windKmh);
 }
 
 // Build a readable place label from a location object.
@@ -107,7 +107,10 @@ function renderCurrent(loc, data, unit) {
   const units = data.current_units;
   const { label, icon } = describeWeather(c.weather_code, c.is_day);
 
-  applyWeatherTheme(c.weather_code, c.is_day);
+  // Normalize wind to km/h (fahrenheit preset returns mph) so cloud motion is
+  // consistent regardless of the unit toggle.
+  const windKmh = unit === "celsius" ? c.wind_speed_10m : c.wind_speed_10m * 1.60934;
+  applyWeatherTheme(c.weather_code, c.is_day, windKmh);
 
   els.currentTemp.classList.remove("pulse");
   els.currentName.innerHTML = placeLabelHtml(loc);
