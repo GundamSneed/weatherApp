@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="weatherApp">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5aa9f0"/>
+      <stop offset="1" stop-color="#2b6fc8"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe07a"/>
+      <stop offset="1" stop-color="#ffb23c"/>
+    </linearGradient>
+    <clipPath id="disc">
+      <circle cx="32" cy="32" r="32"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#disc)">
+    <!-- Blue circle background -->
+    <rect width="64" height="64" fill="url(#sky)"/>
+
+    <!-- Sun peeking out (drawn behind the cloud) -->
+    <g>
+      <g stroke="#ffd24a" stroke-width="2.6" stroke-linecap="round">
+        <line x1="39" y1="5"  x2="39" y2="11"/>
+        <line x1="52" y1="11" x2="48" y2="15"/>
+        <line x1="58" y1="24" x2="52" y2="24"/>
+        <line x1="24" y1="12" x2="27" y2="16"/>
+      </g>
+      <circle cx="39" cy="24" r="10.5" fill="url(#sun)"/>
+    </g>
+
+    <!-- Fluffy white cloud in front -->
+    <g fill="#ffffff">
+      <circle cx="22" cy="43" r="9"/>
+      <circle cx="32" cy="38" r="13"/>
+      <circle cx="43" cy="42" r="10.5"/>
+      <circle cx="50" cy="45" r="7.5"/>
+      <rect x="18" y="44" width="35" height="13" rx="6.5"/>
+    </g>
+  </g>
+</svg>
