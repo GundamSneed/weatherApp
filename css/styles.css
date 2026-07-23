@@ -11,11 +11,11 @@
   --accent: #ffd166;
   --accent-blue: #2f5fb3;
   --accent-blue-hover: #3d70cc;
-  --radius: 18px;
-  --radius-sm: 12px;
   --sidebar-w: 300px;
   --header-h: 68px;
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-hover: 5px 5px 0 rgba(0, 0, 0, 0.45);
+  --shadow-inset: inset 2px 2px 0 rgba(0, 0, 0, 0.3);
   --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -58,8 +58,47 @@ ul {
   outline-offset: 2px;
 }
 
+/* ===== Scrollbars (match the boxed panel design everywhere they appear) ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-blue) var(--panel);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--panel);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+  border: 2px solid var(--panel);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* ===== Ambient particle background ===== */
+/* Fixed behind everything; only visible through the page's own --bg (the
+   opaque .card panels sit above it and are unaffected). Purely decorative,
+   no weather coupling — see js/particles.js. */
+#bg-particles {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ===== App grid ===== */
 .app {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-rows: var(--header-h) 1fr;
   grid-template-areas:
@@ -100,13 +139,12 @@ ul {
 .search-input {
   width: 100%;
   padding: 11px 16px 11px 42px;
-  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--panel-strong);
   color: var(--text);
   font-size: 0.98rem;
   outline: none;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input::placeholder {
@@ -116,6 +154,7 @@ ul {
 .search-input:focus {
   background: var(--panel-hover);
   border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(47, 95, 179, 0.35);
 }
 
 .search-results {
@@ -125,7 +164,6 @@ ul {
   right: 0;
   background: var(--panel-strong);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
   overflow: hidden;
   z-index: 30;
@@ -156,7 +194,6 @@ ul {
 .flag {
   width: 20px;
   height: 15px;
-  border-radius: 2px;
   object-fit: cover;
   vertical-align: -2px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
@@ -178,7 +215,6 @@ ul {
   display: flex;
   background: var(--panel-strong);
   border: 1px solid var(--border);
-  border-radius: 999px;
   overflow: hidden;
 }
 
@@ -187,12 +223,13 @@ ul {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-dim);
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .unit-btn.is-active {
   background: var(--accent-blue);
   color: var(--text);
+  box-shadow: var(--shadow-inset);
 }
 
 /* ===== Sidebar (off-canvas drawer, hidden by default) ===== */
@@ -226,14 +263,21 @@ ul {
   background: var(--panel);
   border: 1px solid var(--border);
   border-left: none;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   box-shadow: var(--shadow);
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .sidebar-tab:hover {
   background: var(--panel-hover);
   border-color: var(--accent-blue);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Pressed-in look while the drawer is open. */
+.sidebar-wrap.is-open .sidebar-tab {
+  color: var(--accent-blue-hover);
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-inset);
 }
 
 .sidebar-backdrop {
@@ -373,6 +417,7 @@ ul {
 
 .save-btn.is-saved {
   color: var(--accent);
+  text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
 }
 
 /* ===== Main ===== */
@@ -386,7 +431,6 @@ ul {
   background: var(--panel);
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent-blue);
-  border-radius: var(--radius-sm);
   padding: 10px 16px;
   font-size: 0.85rem;
   color: var(--text-dim);
@@ -485,23 +529,147 @@ ul {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 8px;
-  scrollbar-width: thin;
+  padding: 10px 2px 8px;
 }
 
 /* ===== Daily ===== */
+.daily {
+  margin-bottom: 40px;
+}
+
 .daily-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
 }
 
+/* ===== Radar + News row (two-up on wide screens, stacked below 760px) ===== */
+.panels-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* ===== Radar ===== */
+.radar-map-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.radar-map {
+  height: 360px;
+  width: 100%;
+}
+
+.radar-map .leaflet-container {
+  background: var(--panel);
+  font-family: var(--font);
+  cursor: default;
+}
+
+.radar-map .leaflet-control-attribution {
+  background: var(--panel-strong);
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+
+.radar-map .leaflet-control-attribution a {
+  color: var(--text-dim);
+}
+
+.radar-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  background: rgba(30, 32, 35, 0.85);
+}
+
+/* ===== News ===== */
+.news-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.news-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-left: 3px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.news-item + .news-item {
+  border-top: 1px solid var(--border);
+}
+
+.news-item:hover {
+  border-left-color: var(--accent-blue);
+  background: var(--panel-hover);
+}
+
+.news-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.news-link:hover,
+.news-link:focus-visible {
+  text-decoration: underline;
+}
+
+.news-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.news-empty {
+  padding: 16px 14px;
+  color: var(--text-faint);
+  font-size: 0.88rem;
+}
+
 /* ===== Opaque card base (used by hourly/daily/saved) ===== */
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
+}
+
+/* ===== Footer ===== */
+.site-footer {
+  margin-top: 40px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.site-footer-link {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  text-decoration: none;
+}
+
+.site-footer-link:hover,
+.site-footer-link:focus-visible {
+  color: var(--text-dim);
+  text-decoration: underline;
 }
 
 /* ===== Hourly cards ===== */
@@ -584,7 +752,8 @@ ul {
 .hour,
 .day {
   border: 1px solid var(--border);
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .hour:hover,
@@ -592,6 +761,7 @@ ul {
   transform: translateY(-3px);
   background: var(--panel-hover);
   border-color: var(--accent-blue);
+  box-shadow: var(--shadow-hover);
 }
 
 /* ===== Fade-in on load ===== */
@@ -602,18 +772,24 @@ ul {
 
 .current,
 .hourly,
-.daily {
+.daily,
+.radar,
+.news {
   animation: fade-in 0.4s ease both;
 }
 
 .hourly { animation-delay: 0.05s; }
 .daily { animation-delay: 0.1s; }
+.radar { animation-delay: 0.15s; }
+.news { animation-delay: 0.15s; }
 
 @media (prefers-reduced-motion: reduce) {
   .pulse,
   .current,
   .hourly,
-  .daily {
+  .daily,
+  .radar,
+  .news {
     animation: none;
   }
   .hour:hover,
@@ -635,5 +811,13 @@ ul {
 
   .unit-btn {
     padding: 8px 12px;
+  }
+
+  .radar-map {
+    height: 280px;
+  }
+
+  .panels-row {
+    grid-template-columns: 1fr;
   }
 }

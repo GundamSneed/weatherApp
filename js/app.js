@@ -85,11 +85,37 @@ function fallbackHintText(location, fallback) {
   return "";
 }
 
+// Guards against redundant news fetches for a location we've already loaded
+// news for (e.g. a unit-toggle flip re-runs loadWeather for the same location).
+let newsLoadedFor = null;
+
+// Fetch and render local news for a location. Independent of the forecast
+// fetch and fails quietly (news-list-scoped error) — never breaks the rest
+// of the page, same convention as the sidebar's per-card mini-weather.
+function loadNews(location) {
+  const hasName = location && location.name && location.name !== "Your Location";
+  if (!hasName) {
+    setNewsLoading();
+    return;
+  }
+  if (newsLoadedFor === location) return;
+  newsLoadedFor = location;
+  setNewsLoading();
+  fetchNews(location)
+    .then((items) => {
+      if (state.location === location) renderNews(items);
+    })
+    .catch(() => {
+      if (state.location === location) showNewsError();
+    });
+}
+
 // Fetch and render weather for a location using the current unit.
 async function loadWeather(location, fallback = null) {
   state.location = location;
   setFallbackHint(fallbackHintText(location, fallback));
   setLoading(location);
+  loadNews(location);
   try {
     const data = await fetchForecast({
       latitude: location.latitude,
@@ -101,6 +127,7 @@ async function loadWeather(location, fallback = null) {
     renderHourly(data);
     renderDaily(data);
     updateSaveButton();
+    updateRadar(location);
 
     // For the current location we only have coords — resolve the real city
     // name in the background and swap it in when it arrives (keep the
@@ -112,6 +139,7 @@ async function loadWeather(location, fallback = null) {
             Object.assign(location, place);
             updatePlaceName(location);
             updateSaveButton(); // now has a name/country -> becomes saveable
+            loadNews(location); // re-query news now that we have a real place name
           }
         })
         .catch(() => {});

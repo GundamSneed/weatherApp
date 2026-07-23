@@ -7,6 +7,12 @@ const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
 // Reverse geocoding (coords -> place name) — BigDataCloud, free, no API key.
 // Open-Meteo has no reverse endpoint, so this fills in the current-location name.
 const REVERSE_GEOCODE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
+// Google News RSS has no CORS headers for direct browser fetch (confirmed by hand:
+// no Access-Control-Allow-Origin on the raw feed response) — rss2json is a keyless
+// RSS->JSON pass-through that does send `access-control-allow-origin: *`, so we go
+// through it instead of fetching the feed directly.
+const NEWS_RSS_URL = "https://news.google.com/rss/search";
+const NEWS_PROXY_URL = "https://api.rss2json.com/v1/api.json";
 
 // Unit presets. The app toggles between "fahrenheit" and "celsius"; each maps to a
 // matching wind-speed unit so the UI stays internally consistent.
@@ -138,4 +144,38 @@ async function reverseGeocode(latitude, longitude) {
     country: data.countryName || "",
     countryCode: data.countryCode || "",
   };
+}
+
+/**
+ * Fetch a handful of local news headlines for a location via Google News RSS
+ * (through the rss2json pass-through, see NEWS_PROXY_URL comment above).
+ * @param {Object} loc { name, admin1 }
+ * @param {number} [count=5]
+ * @returns {Promise<Array>} { headline, source, link, pubDate }
+ */
+async function fetchNews(loc, count = 5) {
+  const parts = [loc.name];
+  if (loc.admin1 && loc.admin1 !== loc.name) parts.push(loc.admin1);
+  if (!parts[0]) return [];
+  // Bias toward weather-related coverage (forecasts, storms, advisories) rather
+  // than general local news — still location-specific via the place name.
+  const query = `${parts.join(", ")} weather`;
+
+  const rssUrl = `${NEWS_RSS_URL}?${toQuery({ q: query, hl: "en-US", gl: "US", ceid: "US:en" })}`;
+  const data = await fetchJSON(`${NEWS_PROXY_URL}?${toQuery({ rss_url: rssUrl })}`);
+  if (data.status !== "ok" || !Array.isArray(data.items)) {
+    throw new Error("News feed returned no results.");
+  }
+  return data.items.slice(0, count).map((item) => {
+    const raw = item.title || "";
+    // Google News RSS titles are formatted "Headline - Source"; the source is
+    // always the last " - "-separated segment.
+    const sep = raw.lastIndexOf(" - ");
+    return {
+      headline: sep > -1 ? raw.slice(0, sep) : raw,
+      source: sep > -1 ? raw.slice(sep + 3) : "",
+      link: item.link || "",
+      pubDate: item.pubDate || "", // "YYYY-MM-DD HH:MM:SS", UTC
+    };
+  });
 }

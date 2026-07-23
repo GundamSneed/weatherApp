@@ -13,6 +13,7 @@ const els = {
   hourlyStrip: document.getElementById("hourly-strip"),
   dailySection: document.getElementById("daily"),
   dailyGrid: document.getElementById("daily-grid"),
+  newsList: document.getElementById("news-list"),
   searchInput: document.getElementById("search-input"),
   searchResults: document.getElementById("search-results"),
   savedList: document.getElementById("saved-list"),
@@ -148,6 +149,56 @@ function renderDaily(data) {
     })
     .join("");
   els.dailySection.hidden = false;
+}
+
+// Format a news pubDate ("2026-07-23 10:05:38", UTC, no offset) as a short
+// relative string. Returns "" if the date can't be parsed.
+function formatNewsDate(pubDate) {
+  if (!pubDate) return "";
+  const date = new Date(pubDate.replace(" ", "T") + "Z");
+  if (isNaN(date.getTime())) return "";
+  const mins = Math.round((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// Render the local-news list. Each row: linked headline, source, relative date.
+function renderNews(items) {
+  if (!items.length) {
+    els.newsList.innerHTML = `<li class="news-empty">No local news found.</li>`;
+    return;
+  }
+  els.newsList.innerHTML = items
+    .map((item) => {
+      const when = formatNewsDate(item.pubDate);
+      return `
+        <li class="news-item">
+          <a class="news-link" href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">
+            ${escapeHtml(item.headline)}
+          </a>
+          <span class="news-meta">
+            ${item.source ? `<span class="news-source">${escapeHtml(item.source)}</span>` : ""}
+            ${when ? `<span class="news-date">${escapeHtml(when)}</span>` : ""}
+          </span>
+        </li>`;
+    })
+    .join("");
+}
+
+// News loading/error states — scoped to the news list only, so a feed/proxy
+// failure never touches the rest of the page (same "fail quietly" convention
+// as the sidebar's per-card mini-weather).
+function setNewsLoading() {
+  els.newsList.innerHTML = `<li class="news-empty pulse">Loading headlines…</li>`;
+}
+
+function showNewsError() {
+  els.newsList.innerHTML = `<li class="news-empty">Unable to load local news.</li>`;
 }
 
 // Show a loading state in the main panel.
